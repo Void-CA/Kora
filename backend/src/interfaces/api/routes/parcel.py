@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
-from app.application.use_cases.create_parcel import CreateParcel
-from app.interfaces.api.schemas.parcel import ParcelCreate
-from app.infrastructure.db.repositories.parcel_repo import SQLParcelRepository
+from application.parcel.create import CreateParcel
+from interfaces.api.schemas.parcel.create import ParcelCreate
+from infrastructure.db.repositories.parcel_repo import SQLParcelRepository
 
 router = APIRouter()
 

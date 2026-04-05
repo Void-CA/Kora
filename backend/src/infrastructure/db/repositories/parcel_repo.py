@@ -1,5 +1,5 @@
-from app.domain.parcel.repository import ParcelRepository
-from app.domain.parcel.entity import Parcel
+from domain.parcel.repository import ParcelRepository
+from domain.parcel.entity import Parcel
 
 class SQLParcelRepository(ParcelRepository):
 

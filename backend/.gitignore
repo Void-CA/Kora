@@ -1,0 +1,14 @@
+.venv/
+kora.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+*.env
+.env.*
+.idea/
+.vscode/
+.DS_Store
