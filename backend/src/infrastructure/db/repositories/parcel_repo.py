@@ -1,26 +1,40 @@
 from domain.parcel.repository import ParcelRepository
 from domain.parcel.entity import Parcel
+import sqlite3
 
 class SQLParcelRepository(ParcelRepository):
 
-    def __init__(self, session):
-        self.session = session
+    def __init__(self, conn : sqlite3.Connection):
+        self.conn = conn
 
     def save(self, parcel: Parcel) -> Parcel:
-        query = """
-        INSERT INTO parcels (name, geometry)
-        VALUES (:name, ST_GeomFromText(:geometry))
-        RETURNING id;
-        """
+        cursor = self.conn.cursor()
 
-        result = self.session.execute(query, {
-            "name": parcel.name,
-            "geometry": parcel.geometry
-        })
+        cursor.execute(
+            "INSERT INTO parcels (name, geometry) VALUES (?, ?)",
+            (parcel.name, parcel.geometry)
+        )
 
-        parcel.id = result.fetchone()[0]
+        self.conn.commit()
+
+        parcel.id = cursor.lastrowid
         return parcel
 
     def get(self, parcel_id: int) -> Parcel | None:
-        # simplificado
-        pass
+        cursor = self.conn.cursor()
+
+        cursor.execute(
+            "SELECT id, name, geometry FROM parcels WHERE id = ?",
+            (parcel_id,)
+        )
+
+        row = cursor.fetchone()
+
+        if not row:
+            return None
+
+        return Parcel(
+            id=row["id"],
+            name=row["name"],
+            geometry=row["geometry"]
+        )
