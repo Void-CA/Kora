@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends
-from interfaces.api.schemas.parcel.create import ParcelCreate
-from application.parcel.create import CreateParcel
-from infrastructure.db.session import get_connection
-from infrastructure.db.repositories.parcel_repo import SQLParcelRepository
+from app.interfaces.api.schemas.parcel.create import ParcelCreate
+from app.application.parcel.create import CreateParcel
+from app.infrastructure.db.session import get_db
+from app.infrastructure.db.repositories.parcel_repo import SQLParcelRepository
 
 router = APIRouter()
 
 def get_repo():
-    conn = get_connection()
+    conn = get_db()
     return SQLParcelRepository(conn)
 
 @router.post("/parcels")

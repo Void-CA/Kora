@@ -1,5 +1,5 @@
-from domain.parcel.repository import ParcelRepository
-from domain.parcel.entity import Parcel
+from app.domain.parcel.repository import ParcelRepository
+from app.domain.parcel.entity import Parcel
 import sqlite3
 
 class SQLParcelRepository(ParcelRepository):
