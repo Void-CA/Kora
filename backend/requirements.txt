@@ -16,7 +16,6 @@ httpx==0.28.1
 idna==3.11
 itsdangerous==2.2.0
 Jinja2==3.1.6
--e git+https://github.com/Void-CA/Kora.git@a3a4bea999afb0e4d0b236991d511c840e1f5b93#egg=kora&subdirectory=backend
 markdown-it-py==4.0.0
 MarkupSafe==3.0.3
 mdurl==0.1.2
