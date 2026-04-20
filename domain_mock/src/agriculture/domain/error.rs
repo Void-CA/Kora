@@ -7,6 +7,7 @@ pub enum AgricultureError {
     AreaNotFound(AreaId),
     CropNotFound,
     CycleNotFound(CycleId),
+    CycleAlreadyClosed,
 
     // Invariantes de Negocio (Reglas rotas)
     SpaceTimeCollision { area_id: AreaId, start: i64, end: i64 },

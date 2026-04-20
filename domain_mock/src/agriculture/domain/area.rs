@@ -6,7 +6,7 @@ use crate::shared_kernel::ids::AreaId;
 pub enum AreaClassification {
     Productive,
     Greenhouse,
-    Storage, // Según tu primera hoja de apuntes, el almacén tiene su propia lógica
+    Storage, // El almacén PODRIA tener su propia lógica
 }
 
 #[derive(Debug)]

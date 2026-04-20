@@ -1,0 +1,3 @@
+### Las carpetas principales dentro de `src/` son:
+
+A nivel de negocio son Subdomains. A nivel de reglas y lenguaje son Bounded Contexts. Y a nivel de organización de código físico son Vertical Slices dentro de un Modular Monolith. Dimensiones era una forma muy poética e increíblemente precisa de verlo desde la perspectiva de los datos (la dimensión espacial, la dimensión financiera), pero arquitectónicamente, Bounded Context es el término estándar de la industria
