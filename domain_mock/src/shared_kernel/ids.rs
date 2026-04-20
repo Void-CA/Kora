@@ -13,3 +13,6 @@ pub struct CycleId(pub String);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ActivityId(pub String);
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct WorkerId(pub String);

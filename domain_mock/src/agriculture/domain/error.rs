@@ -13,7 +13,13 @@ pub enum AgricultureError {
     SpaceTimeCollision { area_id: AreaId, start: i64, end: i64 },
     ActivityOutsideCyclePeriod,
     AlreadyHarvested,
-
+    
+    // Invariantes espaciales
+    ProductiveAreaExceedsBounds {
+        declared_ha: f64,
+        max_theoretical_ha: f64,
+    },
+    
     // Errores de Validación (Inputs inválidos)
     InvalidMeasurement,
     InvalidPeriod,

@@ -1,4 +1,4 @@
-// shared_kernel/time.rs
+// shared_kernel/period
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Period {
