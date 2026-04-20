@@ -8,6 +8,9 @@ pub struct Crop {
 }
 
 impl Crop {
+    pub fn new(id: CropId, name: String) -> Self {
+        Self { id, name }
+    }
     pub fn id(&self) -> &CropId {
         &self.id
     }

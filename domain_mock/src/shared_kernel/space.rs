@@ -1,4 +1,4 @@
-// shared_kernel/space.rs
+use crate::shared_kernel::error::SpaceError;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Measurement {
@@ -6,9 +6,9 @@ pub struct Measurement {
 }
 
 impl Measurement {
-    pub fn new(hectares: f64) -> Result<Self, &'static str> {
+    pub fn new(hectares: f64) -> Result<Self, SpaceError> {
         if hectares <= 0.0 {
-            return Err("Measurement must be greater than zero");
+            return Err(SpaceError::InvalidMeasurement);
         }
         Ok(Self { hectares })
     }
@@ -17,6 +17,16 @@ impl Measurement {
 // Representación simplificada de la geometría (Sección 4.1 del PRD)
 #[derive(Debug, Clone, PartialEq)]
 pub struct Polygon {
-    // Aquí iría un Vec de Coordenadas, GIS data, etc.
     coordinates: Vec<(f64, f64)>,
+}
+
+impl Polygon {
+    pub fn new(coordinates: Vec<(f64, f64)>) -> Result<Self, SpaceError> {
+        // Un polígono requiere al menos 3 vértices
+        if coordinates.len() < 3 {
+            return Err(SpaceError::NotEnoughVertices);
+        }
+
+        Ok(Self { coordinates })
+    }
 }
