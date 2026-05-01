@@ -1,5 +1,5 @@
 // agriculture/domain/services/economic_variance.rs
-use crate::shared_kernel::money::Money;
+use crate::shared_kernel::money::{Money, RateError};
 use super::super::planning::PlannedActivityId;
 use super::variance_service::MatchedActivity;
 
@@ -29,7 +29,7 @@ impl CostVariance {
     /// Creates a new CostVariance.
     /// Returns Result because planned and actual MUST have the same currency.
     /// This forces callers to handle currency mismatch explicitly (no silent ignore).
-    pub fn new(planned_cost: Money, actual_cost: Money) -> Result<Self, crate::shared_kernel::money::RateError> {
+    pub fn new(planned_cost: Money, actual_cost: Money) -> Result<Self, RateError> {
         let variance = actual_cost
             .subtract(&planned_cost)?;  // Propagate error - no .expect()!
 
