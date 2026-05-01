@@ -16,3 +16,6 @@ pub struct ActivityId(pub String);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct WorkerId(pub String);
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ScheduleId(pub String);

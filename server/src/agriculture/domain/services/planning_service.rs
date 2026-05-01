@@ -1,8 +1,9 @@
 // agriculture/domain/planning_service.rs
-use super::farm::Farm;
-use super::crop::Crop;
-use super::cycle::CropCycle;
-use super::error::AgricultureError;
+use crate::agriculture::domain::farm::Farm;
+use crate::agriculture::domain::crop::Crop;
+use crate::agriculture::domain::cycle::CropCycle;
+use crate::agriculture::domain::error::AgricultureError;
+use crate::agriculture::domain::planning::{Schedule, ScheduleAnchor};
 use crate::shared_kernel::ids::AreaId;
 use crate::shared_kernel::time::Period;
 

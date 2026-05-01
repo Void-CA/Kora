@@ -11,7 +11,6 @@ pub enum AgricultureError {
 
     // Invariantes de Negocio (Reglas rotas)
     SpaceTimeCollision { area_id: AreaId, start: i64, end: i64 },
-    ActivityOutsideCyclePeriod,
     AlreadyHarvested,
     
     // Invariantes espaciales

@@ -9,21 +9,40 @@ pub enum ActivityCategory {
     Harvest,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
+pub enum IntegrityStatus {
+    Valid,
+    OutsidePeriod,
+    Unplanned,
+}
+
+#[derive(Debug, Clone)]
+pub struct ActivityRecord {
+    pub activity: Activity,
+    pub integrity: Vec<IntegrityStatus>,
+}
+
+impl ActivityRecord {
+    pub fn new(activity: Activity, integrity: Vec<IntegrityStatus>) -> Self {
+        Self { activity, integrity }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Input {
     pub resource_name: String, // Podría ser un ResourceId en el futuro
     pub quantity: f64,
     pub unit: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Outcome {
     pub result_name: String,
     pub quantity: f64,
     pub unit: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Activity {
     id: ActivityId,
     timestamp: i64,
