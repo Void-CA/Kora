@@ -1,7 +1,7 @@
 // Test de Integración: Flujo completo Plan → Ejecutar → Analizar
 // Este test valida si el dominio actual soporta flujos de negocio reales.
 
-use crate::agriculture::domain::{CropCycle, Schedule, ScheduleAnchor, PlannedActivity, Activity, ActivityStatus, ActivityCategory, IntegrityStatus};
+use crate::agriculture::domain::{CropCycle, Schedule, ScheduleAnchor, PlannedActivity, PlannedActivityId, Activity, ActivityStatus, ActivityCategory, IntegrityStatus};
 use crate::finance::domain::{Budget, ExpenseCategory, Expense};
 use crate::shared_kernel::ids::{CycleId, CropId, AreaId, BudgetId};
 use crate::shared_kernel::time::Period;
@@ -38,6 +38,7 @@ fn configurar_flujo() -> (CropCycle, Schedule, Budget) {
 
     // Planificado: Siembra en el día 0 (timestamp 1500)
     cronograma.add_planned_activity(PlannedActivity {
+        id: PlannedActivityId(uuid::Uuid::new_v4().to_string()),
         category: ActivityCategory::Sowing,
         relative_day: 0,
         status: ActivityStatus::Planned,
@@ -45,6 +46,7 @@ fn configurar_flujo() -> (CropCycle, Schedule, Budget) {
 
     // Planificado: Fertilización en el día +15 (timestamp 1515)
     cronograma.add_planned_activity(PlannedActivity {
+        id: PlannedActivityId(uuid::Uuid::new_v4().to_string()),
         category: ActivityCategory::Maintenance, // Usamos Maintenance como proxy para Fertilización
         relative_day: 15,
         status: ActivityStatus::Planned,

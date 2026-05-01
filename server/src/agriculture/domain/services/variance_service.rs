@@ -1,57 +1,160 @@
 // agriculture/domain/services/variance_service.rs
-use super::super::activity::{ActivityRecord, IntegrityStatus};
-use super::super::planning::{Schedule, PlannedActivity};
+use std::collections::{HashMap, VecDeque};
+use super::super::activity::{ActivityRecord, Activity, ActivityCategory};
+use super::super::planning::{Schedule, PlannedActivity, PlannedActivityId};
 use super::super::cycle::CropCycle;
 
+// --- NEW: ConfidenceScore ---
+#[derive(Debug, Clone, PartialEq)]
+pub enum ConfidenceScore {
+    High,    // Exact match: same category + OnTime
+    Medium,  // Within tolerance but not OnTime
+    Low,     // Outside tolerance
+}
+
+// --- NEW: MatchedActivity (Explicit matching) ---
+#[derive(Debug, Clone)]
+pub struct MatchedActivity {
+    pub planned_id: PlannedActivityId,
+    pub record: ActivityRecord,  // Contains Activity with ActivityId inside
+    pub variance: TimingVariance,
+    pub confidence: ConfidenceScore,
+}
+
+// --- NEW: TimingVariance ---
+#[derive(Debug, Clone, PartialEq)]
+pub enum TimingVariance {
+    OnTime,
+    Early(i64),  // days early (positive number)
+    Late(i64),    // days late (positive number)
+}
+
+// --- NEW: VarianceConfig (Externalized tolerance) ---
+#[derive(Debug, Clone)]
+pub struct VarianceConfig {
+    pub temporal_tolerance_days: i64,
+    pub enable_early_detection: bool,
+    pub enable_confidence_scoring: bool,
+}
+
+// --- NEW: VarianceReport (Explicit matching) ---
+#[derive(Debug, Clone)]
 pub struct VarianceReport {
-    pub on_time: Vec<ActivityRecord>,
-    pub delayed: Vec<(PlannedActivity, ActivityRecord)>,
+    pub matched: Vec<MatchedActivity>,  // EXPLICIT: planned_id + record + variance + confidence
     pub unplanned: Vec<ActivityRecord>,
+    pub missing: Vec<PlannedActivity>,
 }
 
 impl VarianceReport {
     pub fn new() -> Self {
         Self {
-            on_time: Vec::new(),
-            delayed: Vec::new(),
+            matched: Vec::new(),
             unplanned: Vec::new(),
+            missing: Vec::new(),
         }
     }
 }
 
+// --- Service ---
 pub struct VarianceService;
 
 impl VarianceService {
-    pub fn analyze(schedule: &Schedule, cycle: &mut CropCycle) -> VarianceReport {
+    // PURE function with config injection
+    pub fn analyze_with_config(
+        schedule: &Schedule,
+        cycle: &CropCycle,
+        config: &VarianceConfig,
+    ) -> VarianceReport {
         let mut report = VarianceReport::new();
 
-        // Get mutable access to executed_activities
-        let executed_activities = cycle.executed_activities_mut();
+        // Build VecDeque per category (to enable pop_front for no-reuse)
+        let mut planned_by_category: HashMap<ActivityCategory, VecDeque<&PlannedActivity>> = HashMap::new();
+        for planned in schedule.activities() {
+            planned_by_category
+                .entry(planned.category.clone())
+                .or_insert_with(VecDeque::new)
+                .push_back(planned);
+        }
 
-        for record in executed_activities.iter_mut() {
-            let mut matched_planned: Option<&PlannedActivity> = None;
+        // Process each executed activity
+        for record in cycle.executed_activities() {
+            let category = record.activity.category();
 
-            // Find first planned activity with matching category
-            for planned in schedule.activities() {
-                if planned.category == *record.activity.category() {
-                    matched_planned = Some(planned);
-                    break;
+            if let Some(queue) = planned_by_category.get_mut(category) {
+                // Find best match by temporal proximity
+                let mut best_match: Option<(usize, &PlannedActivity, i64)> = None;
+                let mut idx = 0;
+
+                for planned in queue.iter().copied() {
+                    let expected_ts = schedule.anchor_date() + planned.relative_day as i64;
+                    let diff_days = record.activity.timestamp() - expected_ts;
+
+                    if best_match.is_none() || diff_days.abs() < best_match.unwrap().2.abs() {
+                        best_match = Some((idx, planned, diff_days));
+                    }
+                    idx += 1;
                 }
-            }
 
-            if let Some(planned) = matched_planned {
-                let expected_ts = schedule.anchor_date() + planned.relative_day as i64;
-                if record.activity.timestamp() == expected_ts {
-                    // On time: category and timestamp match
-                    report.on_time.push(record.clone());
+                if let Some((idx, planned, diff_days)) = best_match {
+                    // NO REUSE: Remove from queue
+                    queue.remove(idx).unwrap();
+
+                    // Calculate variance
+                    let variance = if diff_days == 0 {
+                        TimingVariance::OnTime
+                    } else if diff_days > 0 {
+                        TimingVariance::Late(diff_days)
+                    } else {
+                        TimingVariance::Early(diff_days.abs())
+                    };
+
+                    // Apply tolerance: if within tolerance, keep variance; else set to Early/Late with full diff
+                    let (variance, confidence) = if diff_days == 0 {
+                        (variance, ConfidenceScore::High)
+                    } else if diff_days.abs() <= config.temporal_tolerance_days {
+                        // Within tolerance
+                        let confidence = if config.enable_confidence_scoring {
+                            ConfidenceScore::Medium
+                        } else {
+                            ConfidenceScore::High  // Default if scoring disabled
+                        };
+                        (variance, confidence)
+                    } else {
+                        // Outside tolerance
+                        let variance = if diff_days > 0 {
+                            TimingVariance::Late(diff_days)
+                        } else {
+                            TimingVariance::Early(diff_days.abs())
+                        };
+                        let confidence = if config.enable_confidence_scoring {
+                            ConfidenceScore::Low
+                        } else {
+                            ConfidenceScore::High  // Default if scoring disabled
+                        };
+                        (variance, confidence)
+                    };
+
+                    // Create explicit MatchedActivity
+                    report.matched.push(MatchedActivity {
+                        planned_id: planned.id.clone(),
+                        record: record.clone(),
+                        variance,
+                        confidence,
+                    });
                 } else {
-                    // Delayed: category match but timestamp mismatch
-                    report.delayed.push((planned.clone(), record.clone()));
+                    // No good match found in queue (shouldn't happen if we got here)
+                    report.unplanned.push(record.clone());
                 }
             } else {
-                // Unplanned: no matching PlannedActivity
-                record.integrity.push(IntegrityStatus::Unplanned);
+                // No matching category: unplanned
                 report.unplanned.push(record.clone());
+            }
+        }
+
+        // Remaining in queues = missing
+        for (_, queue) in planned_by_category.iter() {
+            for planned in queue.iter().copied() {
+                report.missing.push(planned.clone());
             }
         }
 
@@ -64,7 +167,7 @@ mod tests {
     use super::*;
     use super::super::super::activity::{Activity, ActivityCategory, ActivityRecord, IntegrityStatus};
     use super::super::super::planning::{Schedule, PlannedActivity, ActivityStatus};
-    use crate::shared_kernel::ids::{ScheduleId, CycleId, CropId, AreaId};
+    use crate::shared_kernel::ids::{CycleId, CropId, AreaId};
     use crate::shared_kernel::time::Period;
 
     fn create_test_schedule() -> Schedule {
@@ -74,11 +177,13 @@ mod tests {
             1500,
         );
         schedule.add_planned_activity(PlannedActivity {
+            id: super::super::super::planning::PlannedActivityId(uuid::Uuid::new_v4().to_string()),
             category: ActivityCategory::Sowing,
             relative_day: 0,
             status: ActivityStatus::Planned,
         });
         schedule.add_planned_activity(PlannedActivity {
+            id: super::super::super::planning::PlannedActivityId(uuid::Uuid::new_v4().to_string()),
             category: ActivityCategory::Maintenance,
             relative_day: 15,
             status: ActivityStatus::Planned,
@@ -87,10 +192,6 @@ mod tests {
     }
 
     fn create_test_cycle() -> CropCycle {
-        use super::super::super::cycle::CropCycle;
-        use crate::shared_kernel::time::Period;
-        use crate::shared_kernel::ids::AreaId;
-
         let period = Period::new(1000, 2000).unwrap();
         CropCycle::new(
             CropId("crop-1".to_string()),
@@ -99,51 +200,131 @@ mod tests {
         )
     }
 
-    #[test]
-    fn variance_report_new_returns_empty_buckets() {
-        let report = VarianceReport::new();
-        assert_eq!(report.on_time.len(), 0);
-        assert_eq!(report.delayed.len(), 0);
-        assert_eq!(report.unplanned.len(), 0);
+    fn default_config() -> VarianceConfig {
+        VarianceConfig {
+            temporal_tolerance_days: 2,
+            enable_early_detection: true,
+            enable_confidence_scoring: true,
+        }
     }
 
     #[test]
-    fn analyze_with_perfect_match_returns_on_time() {
-        let schedule = create_test_schedule();
+    fn matched_activity_explicit_linking() {
+        let mut schedule = create_test_schedule();
         let mut cycle = create_test_cycle();
 
-        // Activity matches Sowing at relative_day 0: expected_ts = 1500 + 0 = 1500
+        // Add activity matching Sowing (relative_day 0, expected 1500)
         let activity = Activity::new(1500, ActivityCategory::Sowing);
         let result = cycle.register_activity(activity);
         assert!(result.is_ok());
 
-        let report = VarianceService::analyze(&schedule, &mut cycle);
+        let config = default_config();
+        let report = VarianceService::analyze_with_config(&schedule, &cycle, &config);
 
-        assert_eq!(report.on_time.len(), 1);
-        assert_eq!(report.delayed.len(), 0);
-        assert_eq!(report.unplanned.len(), 0);
+        assert_eq!(report.matched.len(), 1);
+        assert_eq!(report.matched[0].planned_id, schedule.activities()[0].id);
+        assert!(matches!(report.matched[0].variance, TimingVariance::OnTime));
+        assert!(matches!(report.matched[0].confidence, ConfidenceScore::High));
     }
 
     #[test]
-    fn analyze_with_delayed_activity_returns_delayed() {
+    fn no_reuse_of_planned_activities() {
+        let mut schedule = create_test_schedule();
+        let mut cycle = create_test_cycle();
+
+        // Only 1 planned Sowing, but 2 executed
+        let activity1 = Activity::new(1500, ActivityCategory::Sowing);
+        let result1 = cycle.register_activity(activity1);
+        assert!(result1.is_ok());
+
+        let activity2 = Activity::new(1501, ActivityCategory::Sowing);  // Second Sowing
+        let result2 = cycle.register_activity(activity2);
+        assert!(result2.is_ok());
+
+        let config = default_config();
+        let report = VarianceService::analyze_with_config(&schedule, &cycle, &config);
+
+        // Only 1 matched (the first), second goes to unplanned
+        assert_eq!(report.matched.len(), 1);
+        assert_eq!(report.unplanned.len(), 1);
+    }
+
+    #[test]
+    fn variance_config_injection() {
         let schedule = create_test_schedule();
         let mut cycle = create_test_cycle();
 
         // Maintenance planned at relative_day 15: expected_ts = 1500 + 15 = 1515
-        // But activity is at timestamp 1520 (5 days late)
+        // Activity at 1520 (5 days late)
         let activity = Activity::new(1520, ActivityCategory::Maintenance);
         let result = cycle.register_activity(activity);
         assert!(result.is_ok());
 
-        let report = VarianceService::analyze(&schedule, &mut cycle);
+        // Config with tolerance = 5
+        let config = VarianceConfig {
+            temporal_tolerance_days: 5,
+            enable_early_detection: true,
+            enable_confidence_scoring: true,
+        };
 
-        assert_eq!(report.on_time.len(), 0);
-        assert_eq!(report.delayed.len(), 1);
+        let report = VarianceService::analyze_with_config(&schedule, &cycle, &config);
+
+        // Within new tolerance → Late(5)
+        assert_eq!(report.matched.len(), 1);
+        assert!(matches!(report.matched[0].variance, TimingVariance::Late(5)));
+    }
+
+    #[test]
+    fn confidence_score_high() {
+        let schedule = create_test_schedule();
+        let mut cycle = create_test_cycle();
+
+        // Exact match: Sowing at day 0 (timestamp 1500)
+        let activity = Activity::new(1500, ActivityCategory::Sowing);
+        let result = cycle.register_activity(activity);
+        assert!(result.is_ok());
+
+        let config = default_config();  // tolerance = 2
+        let report = VarianceService::analyze_with_config(&schedule, &cycle, &config);
+
+        assert_eq!(report.matched.len(), 1);
+        assert!(matches!(report.matched[0].confidence, ConfidenceScore::High));
+    }
+
+    #[test]
+    fn confidence_score_medium() {
+        let schedule = create_test_schedule();
+        let mut cycle = create_test_cycle();
+
+        // Maintenance planned at day 15 (1515), activity at 1517 (2 days late, within tolerance)
+        let activity = Activity::new(1517, ActivityCategory::Maintenance);
+        let result = cycle.register_activity(activity);
+        assert!(result.is_ok());
+
+        let config = default_config();  // tolerance = 2
+        let report = VarianceService::analyze_with_config(&schedule, &cycle, &config);
+
+        // Within tolerance but not OnTime → Medium
+        assert_eq!(report.matched.len(), 1);
+        assert!(matches!(report.matched[0].confidence, ConfidenceScore::Medium));
+    }
+
+    #[test]
+    fn missing_bucket_with_deque() {
+        let schedule = create_test_schedule();
+        let cycle = create_test_cycle();  // No activities registered
+
+        let config = default_config();
+        let report = VarianceService::analyze_with_config(&schedule, &cycle, &config);
+
+        // 2 planned activities, 0 executed → both in missing
+        assert_eq!(report.missing.len(), 2);
+        assert_eq!(report.matched.len(), 0);
         assert_eq!(report.unplanned.len(), 0);
     }
 
     #[test]
-    fn analyze_with_unplanned_activity_returns_unplanned() {
+    fn unplanned_activity() {
         let schedule = create_test_schedule();
         let mut cycle = create_test_cycle();
 
@@ -152,27 +333,10 @@ mod tests {
         let result = cycle.register_activity(activity);
         assert!(result.is_ok());
 
-        let report = VarianceService::analyze(&schedule, &mut cycle);
+        let config = default_config();
+        let report = VarianceService::analyze_with_config(&schedule, &cycle, &config);
 
-        assert_eq!(report.on_time.len(), 0);
-        assert_eq!(report.delayed.len(), 0);
         assert_eq!(report.unplanned.len(), 1);
-        assert_eq!(report.unplanned[0].integrity.contains(&IntegrityStatus::Unplanned), true);
-    }
-
-    #[test]
-    fn analyze_adds_unplanned_integrity_to_cycle_activities() {
-        let schedule = create_test_schedule();
-        let mut cycle = create_test_cycle();
-
-        // Unplanned activity
-        let activity = Activity::new(2000, ActivityCategory::Harvest);
-        let result = cycle.register_activity(activity);
-        assert!(result.is_ok());
-
-        let _report = VarianceService::analyze(&schedule, &mut cycle);
-
-        // Check that the original cycle activity has IntegrityStatus::Unplanned
-        assert_eq!(cycle.executed_activities()[0].integrity.contains(&IntegrityStatus::Unplanned), true);
+        assert_eq!(report.missing.len(), 2);  // Sowing and Maintenance not executed
     }
 }

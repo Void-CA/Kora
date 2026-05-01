@@ -1,7 +1,7 @@
 // agriculture/activity.rs
 use crate::shared_kernel::ids::ActivityId;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum ActivityCategory {
     Sowing,
     Maintenance,
@@ -74,6 +74,10 @@ impl Activity {
     
     pub fn category(&self) -> &ActivityCategory {
         &self.category
+    }
+    
+    pub fn id(&self) -> &ActivityId {
+        &self.id
     }
     
     pub fn timestamp(&self) -> i64 {

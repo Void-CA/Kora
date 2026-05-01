@@ -15,5 +15,5 @@ pub use cycle::CropCycle;
 pub use farm::Farm;
 pub use area::Area;
 pub use crop::Crop;
-pub use planning::{Schedule, ScheduleAnchor, PlannedActivity, ActivityStatus};
+pub use planning::{Schedule, ScheduleAnchor, PlannedActivity, PlannedActivityId, ActivityStatus};
 pub use analysis::AnalysisMetric;

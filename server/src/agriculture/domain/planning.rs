@@ -2,6 +2,9 @@
 use crate::shared_kernel::ids::{ScheduleId, CycleId};
 use super::activity::ActivityCategory;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct PlannedActivityId(pub String);
+
 #[derive(Debug, Clone)]
 pub enum ScheduleAnchor {
     CycleStart,
@@ -19,6 +22,7 @@ pub enum ActivityStatus {
 
 #[derive(Debug, Clone)]
 pub struct PlannedActivity {
+    pub id: PlannedActivityId,  // NEW: unique ID for each planned activity
     pub category: ActivityCategory,
     pub relative_day: i32,
     pub status: ActivityStatus,
@@ -46,7 +50,11 @@ impl Schedule {
         }
     }
 
-    pub fn add_planned_activity(&mut self, activity: PlannedActivity) {
+    pub fn add_planned_activity(&mut self, mut activity: PlannedActivity) {
+        // Auto-generate ID if empty (shouldn't happen with new struct, but safety check)
+        if activity.id.0.is_empty() {
+            activity.id = PlannedActivityId(uuid::Uuid::new_v4().to_string());
+        }
         self.activities.push(activity);
     }
 
