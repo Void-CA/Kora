@@ -3,6 +3,7 @@ use crate::shared_kernel::ids::{BudgetId, CycleId};
 use crate::shared_kernel::time::Period;
 use crate::shared_kernel::money::{Money, ExchangeRateProvider};
 use crate::finance::error::FinanceError;
+use std::collections::HashMap;
 
 pub struct Budget {
     id: BudgetId,
@@ -11,6 +12,9 @@ pub struct Budget {
     baseline: Money,
     current_expenses: Money,
     rate_provider: Box<dyn ExchangeRateProvider>,
+    // NEW: Per-activity cost tracking (using String keys for cross-domain compatibility)
+    planned_costs: HashMap<String, Money>,      // Key: PlannedActivityId.0 (String)
+    actual_costs: HashMap<String, Money>,       // Key: activity record ID (String)
 }
 
 impl Budget {
@@ -27,6 +31,8 @@ impl Budget {
             baseline,
             current_expenses: Money::new(rust_decimal::Decimal::ZERO, baseline.currency),
             rate_provider,
+            planned_costs: HashMap::new(),
+            actual_costs: HashMap::new(),
         }
     }
 
@@ -66,6 +72,32 @@ impl Budget {
 
     pub fn current_expenses(&self) -> &Money {
         &self.current_expenses
+    }
+
+    // --- NEW: Per-activity cost tracking ---
+    
+    /// Sets the planned cost for a specific planned activity (using String key for cross-domain compatibility).
+    pub fn set_planned_cost(&mut self, planned_id: String, cost: Money) {
+        self.planned_costs.insert(planned_id, cost);
+    }
+
+    /// Registers an actual expense and associates it with an activity record ID.
+    /// Also updates current_expenses (for backward compatibility).
+    pub fn register_expense_for_activity(&mut self, amount: &Money, activity_record_id: String) -> Result<(), FinanceError> {
+        self.actual_costs.insert(activity_record_id, *amount);
+        self.current_expenses = self.current_expenses.add(amount)
+            .map_err(|e| FinanceError::RateError(e))?;
+        Ok(())
+    }
+
+    /// Gets the planned cost for a specific planned activity.
+    pub fn get_planned_cost(&self, planned_id: &str) -> Option<Money> {
+        self.planned_costs.get(planned_id).copied()
+    }
+
+    /// Gets the actual cost for a specific activity record.
+    pub fn get_actual_cost_for_activity(&self, activity_record_id: &str) -> Option<Money> {
+        self.actual_costs.get(activity_record_id).copied()
     }
 }
 
@@ -137,5 +169,41 @@ mod tests {
         budget.register_expense(&expense).unwrap();
         let variance = budget.get_variance().unwrap();
         assert_eq!(variance.amount, Decimal::from(200)); // 1200 - 1000 = 200 over
+    }
+
+    // Test 4.7: FinanceEconomicProvider integrates with Budget
+    #[test]
+    fn finance_economic_provider_integrates_with_budget() {
+        use crate::agriculture::domain::services::economic_variance::EconomicDataProvider;
+        use crate::finance::domain::adapters::FinanceEconomicProvider;
+        use crate::agriculture::domain::PlannedActivityId;
+
+        let period = Period::new(1000, 2000).unwrap();
+        let baseline = Money::new(Decimal::from(1000), Currency::USD);
+        let provider = Box::new(MockRateProvider);
+        let mut budget = Budget::new(CycleId("cycle-1".to_string()), period, baseline, provider);
+
+        // Set planned cost for an activity (using String key)
+        let planned_id = PlannedActivityId("p1".to_string());
+        let planned_cost = Money::new(Decimal::from(100), Currency::USD);
+        budget.set_planned_cost(planned_id.0.clone(), planned_cost);
+
+        // Register actual expense for an activity record
+        let activity_record_id = "rec-1".to_string();
+        let actual_cost = Money::new(Decimal::from(120), Currency::USD);
+        budget.register_expense_for_activity(&actual_cost, activity_record_id.clone()).unwrap();
+
+        // Create FinanceEconomicProvider with this budget
+        let finance_provider = FinanceEconomicProvider::new(budget);
+
+        // Test: get_planned_cost
+        let result_planned = finance_provider.get_planned_cost(&planned_id);
+        assert!(result_planned.is_some());
+        assert_eq!(result_planned.unwrap().amount, Decimal::from(100));
+
+        // Test: get_actual_cost
+        let result_actual = finance_provider.get_actual_cost(&activity_record_id);
+        assert!(result_actual.is_some());
+        assert_eq!(result_actual.unwrap().amount, Decimal::from(120));
     }
 }

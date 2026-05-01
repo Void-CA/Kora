@@ -7,7 +7,7 @@ mod crop;
 mod planning;
 mod analysis;
 
-mod services;
+pub mod services;  // Make public so other domains can access traits
 
 pub use error::AgricultureError;
 pub use activity::{ActivityRecord, Activity, ActivityCategory, IntegrityStatus, Input, Outcome};

@@ -3,6 +3,7 @@ use std::collections::{HashMap, VecDeque};
 use super::super::activity::{ActivityRecord, Activity, ActivityCategory};
 use super::super::planning::{Schedule, PlannedActivity, PlannedActivityId};
 use super::super::cycle::CropCycle;
+use super::economic_variance::CostVariance;
 
 // --- NEW: ConfidenceScore ---
 #[derive(Debug, Clone, PartialEq)]
@@ -19,6 +20,7 @@ pub struct MatchedActivity {
     pub record: ActivityRecord,  // Contains Activity with ActivityId inside
     pub variance: TimingVariance,
     pub confidence: ConfidenceScore,
+    pub cost_variance: Option<super::economic_variance::CostVariance>,  // NEW: Economic data (populated later)
 }
 
 // --- NEW: TimingVariance ---
@@ -140,6 +142,7 @@ impl VarianceService {
                         record: record.clone(),
                         variance,
                         confidence,
+                        cost_variance: None,  // Economic data not filled yet
                     });
                 } else {
                     // No good match found in queue (shouldn't happen if we got here)
