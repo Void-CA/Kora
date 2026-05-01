@@ -5,6 +5,13 @@ use super::activity::ActivityCategory;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PlannedActivityId(pub String);
 
+impl PlannedActivityId {
+    /// Returns the inner string for cross-domain compatibility (e.g., Budget keys).
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum ScheduleAnchor {
     CycleStart,

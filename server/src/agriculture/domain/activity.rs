@@ -52,6 +52,13 @@ pub struct Activity {
     notes: Option<String>,
 }
 
+impl ActivityId {
+    /// Returns the inner string for cross-domain compatibility.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
 impl Activity {
     pub fn new(timestamp: i64, category: ActivityCategory) -> Self {
         Self {

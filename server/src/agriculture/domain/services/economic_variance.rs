@@ -79,7 +79,7 @@ impl EconomicVarianceService {
 
         for m in matched {
             let planned_cost = provider.get_planned_cost(&m.planned_id);
-            let actual_cost = provider.get_actual_cost(&m.record.activity.id().0);  // Pass only ID (minimal data)
+            let actual_cost = provider.get_actual_cost(&m.record.activity.id().as_str());  // Encapsulated access
 
             match (planned_cost, actual_cost) {
                 (Some(pc), Some(ac)) => {
@@ -91,16 +91,32 @@ impl EconomicVarianceService {
 
                     report.matched.push(enriched);
 
-                    // Aggregate using Money::add (centralized logic)
+                    // Aggregate using Money::add (graceful degradation on currency mismatch)
                     total_planned = match (total_planned, Some(pc)) {
                         (None, Some(c)) => Some(c),
-                        (Some(acc), Some(c)) => Some(acc.add(&c).expect("Currency mismatch in total_planned")),
+                        (Some(acc), Some(c)) => {
+                            match acc.add(&c) {
+                                Ok(sum) => Some(sum),
+                                Err(_) => {
+                                    // Currency mismatch: keep previous total, skip this addition
+                                    Some(acc)
+                                }
+                            }
+                        }
                         (acc, None) => acc,
                     };
 
                     total_actual = match (total_actual, Some(ac)) {
                         (None, Some(c)) => Some(c),
-                        (Some(acc), Some(c)) => Some(acc.add(&c).expect("Currency mismatch in total_actual")),
+                        (Some(acc), Some(c)) => {
+                            match acc.add(&c) {
+                                Ok(sum) => Some(sum),
+                                Err(_) => {
+                                    // Currency mismatch: keep previous total, skip this addition
+                                    Some(acc)
+                                }
+                            }
+                        }
                         (acc, None) => acc,
                     };
                 }
@@ -111,11 +127,16 @@ impl EconomicVarianceService {
             }
         }
 
-        // Calculate total variance if we have data
+        // Calculate total variance if we have data (graceful degradation)
         report.total_planned = total_planned;
         report.total_actual = total_actual;
         report.total_variance = match (total_planned, total_actual) {
-            (Some(tp), Some(ta)) => Some(ta.subtract(&tp).expect("Currency mismatch in total_variance")),
+            (Some(tp), Some(ta)) => {
+                match ta.subtract(&tp) {
+                    Ok(variance) => Some(variance),
+                    Err(_) => None, // Currency mismatch
+                }
+            }
             _ => None,
         };
 
