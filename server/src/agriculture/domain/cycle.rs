@@ -64,6 +64,14 @@ impl CropCycle {
     pub fn period(&self) -> &Period {
         &self.period
     }
+
+    pub fn executed_activities_mut(&mut self) -> &mut Vec<ActivityRecord> {
+        &mut self.executed_activities
+    }
+
+    pub fn executed_activities(&self) -> &Vec<ActivityRecord> {
+        &self.executed_activities
+    }
 }
 
 #[cfg(test)]

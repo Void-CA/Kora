@@ -49,4 +49,12 @@ impl Schedule {
     pub fn add_planned_activity(&mut self, activity: PlannedActivity) {
         self.activities.push(activity);
     }
+
+    pub fn activities(&self) -> &Vec<PlannedActivity> {
+        &self.activities
+    }
+
+    pub fn anchor_date(&self) -> i64 {
+        self.anchor_date
+    }
 }
