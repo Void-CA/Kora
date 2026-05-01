@@ -19,3 +19,9 @@ pub struct WorkerId(pub String);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ScheduleId(pub String);
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct BudgetId(pub String);
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ExpenseId(pub String);
