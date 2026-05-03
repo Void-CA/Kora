@@ -35,7 +35,7 @@ pub struct PlannedActivity {
     pub status: ActivityStatus,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Schedule {
     id: ScheduleId,
     cycle_id: CycleId,

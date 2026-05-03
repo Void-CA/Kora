@@ -5,7 +5,7 @@ use super::crop::Crop;
 use crate::shared_kernel::time::Period;
 use crate::shared_kernel::ids::{CycleId, CropId, AreaId};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CropCycle {
     id: CycleId,
     crop_id: CropId,

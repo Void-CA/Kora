@@ -90,7 +90,7 @@ mod tests {
         let record1 = cycle.register_activity(activity1).unwrap();
 
         // --- WHEN: Execute use case (timing only first) ---
-        let input = AnalyzeVarianceInput {
+        let input= AnalyzeVarianceInput {
             schedule,
             cycle,
             config: VarianceConfig {
