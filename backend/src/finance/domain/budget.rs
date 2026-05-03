@@ -175,7 +175,7 @@ mod tests {
     #[test]
     fn finance_economic_provider_integrates_with_budget() {
         use crate::agriculture::domain::services::economic_variance::EconomicDataProvider;
-        use crate::finance::domain::adapters::FinanceEconomicProvider;
+        use crate::finance::infrastructure::FinanceEconomicProvider;
         use crate::agriculture::domain::PlannedActivityId;
 
         let period = Period::new(1000, 2000).unwrap();
