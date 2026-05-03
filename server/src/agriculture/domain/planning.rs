@@ -72,4 +72,9 @@ impl Schedule {
     pub fn anchor_date(&self) -> i64 {
         self.anchor_date
     }
+
+    /// Returns the cycle ID this schedule belongs to
+    pub fn cycle_id(&self) -> &CycleId {
+        &self.cycle_id
+    }
 }
