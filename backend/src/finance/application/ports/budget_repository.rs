@@ -9,6 +9,7 @@ pub trait BudgetRepository {
 }
 
 // In-memory implementation for testing
+#[derive(Default)]
 pub struct InMemoryBudgetRepository {
     budgets: std::collections::HashMap<String, Budget>,
 }

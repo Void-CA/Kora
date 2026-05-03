@@ -1,16 +1,6 @@
 // agriculture/domain/planning.rs
-use crate::shared_kernel::ids::{ScheduleId, CycleId};
+use crate::shared_kernel::ids::{ScheduleId, CycleId, PlannedActivityId};
 use super::activity::ActivityCategory;
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct PlannedActivityId(pub String);
-
-impl PlannedActivityId {
-    /// Returns the inner string for cross-domain compatibility (e.g., Budget keys).
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
 
 #[derive(Debug, Clone)]
 pub enum ScheduleAnchor {
@@ -29,10 +19,22 @@ pub enum ActivityStatus {
 
 #[derive(Debug, Clone)]
 pub struct PlannedActivity {
-    pub id: PlannedActivityId,  // NEW: unique ID for each planned activity
+    pub id: PlannedActivityId, // NEW: unique ID for each planned activity (from shared_kernel)
     pub category: ActivityCategory,
-    pub relative_day: i32,
+    pub relative_day: i32, // Day relative to anchor (e.g., +15 = 15 days after sowing)
     pub status: ActivityStatus,
+}
+
+impl PlannedActivity {
+    /// Helper to create a new PlannedActivity with a unique ID.
+    pub fn new(category: ActivityCategory, relative_day: i32) -> Self {
+        Self {
+            id: PlannedActivityId::new(), // Uses shared_kernel implementation
+            category,
+            relative_day,
+            status: ActivityStatus::Planned,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

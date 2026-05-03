@@ -39,7 +39,7 @@ impl Money {
     pub fn convert_to(
         &self,
         target: Currency,
-        provider: &impl ExchangeRateProvider,
+        provider: &dyn ExchangeRateProvider,
     ) -> Result<Self, RateError> {
         if self.currency == target {
             return Ok(self.clone());

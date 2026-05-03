@@ -1,7 +1,7 @@
 // agriculture/domain/services/economic_variance.rs
 use crate::shared_kernel::money::{Money, RateError};
-use super::super::planning::PlannedActivityId;
-use super::variance_service::MatchedActivity;
+use crate::shared_kernel::ids::{PlannedActivityId, ActivityRecordId};
+use super::super::services::variance_service::MatchedActivity;
 
 // --- TRAIT: EconomicDataProvider (lives in agriculture, receives MINIMAL data) ---
 /// Contract: Provider MUST return costs in the SAME currency for all calls.
@@ -14,7 +14,7 @@ pub trait EconomicDataProvider {
 
     /// Returns the actual cost for a given activity record ID.
     /// Should return None if no expense data exists (graceful degradation).
-    fn get_actual_cost(&self, record_id: &str) -> Option<Money>;
+    fn get_actual_cost(&self, record_id: &ActivityRecordId) -> Option<Money>;
 }
 
 // --- COST VARIANCE (specific name, NOT generic "EconomicData") ---
@@ -71,7 +71,7 @@ impl EconomicVarianceService {
     /// Gracefully skips activities where cost data is unavailable.
     pub fn analyze_costs(
         matched: &[MatchedActivity],
-        provider: &impl EconomicDataProvider,
+        provider: &dyn EconomicDataProvider,
     ) -> EconomicVarianceReport {
         let mut report = EconomicVarianceReport::new();
         let mut total_planned = None;
@@ -79,7 +79,9 @@ impl EconomicVarianceService {
 
         for m in matched {
             let planned_cost = provider.get_planned_cost(&m.planned_id);
-            let actual_cost = provider.get_actual_cost(&m.record.activity.id().as_str());
+            // Convert activity ID to ActivityRecordId for the provider
+            let activity_record_id = ActivityRecordId(m.record.activity.id().0.clone());
+            let actual_cost = provider.get_actual_cost(&activity_record_id);
 
             match (planned_cost, actual_cost) {
                 (Some(pc), Some(ac)) => {
@@ -159,8 +161,8 @@ impl EconomicVarianceService {
 mod tests {
     use super::*;
     use crate::shared_kernel::money::{Money, Currency};
+    use crate::shared_kernel::ids::{PlannedActivityId, ActivityRecordId};
     use rust_decimal::Decimal;
-    use crate::agriculture::domain::planning::PlannedActivityId;
     use crate::agriculture::domain::activity::{Activity, ActivityCategory, ActivityRecord, IntegrityStatus};
     use super::super::variance_service::{TimingVariance, ConfidenceScore};
 
@@ -175,8 +177,8 @@ mod tests {
             self.planned_costs.get(&planned_id.0).copied()
         }
 
-        fn get_actual_cost(&self, record_id: &str) -> Option<Money> {
-            self.actual_costs.get(record_id).copied()
+        fn get_actual_cost(&self, record_id: &ActivityRecordId) -> Option<Money> {
+            self.actual_costs.get(&record_id.0).copied()
         }
     }
 

@@ -1,9 +1,10 @@
 // agriculture/domain/services/variance_service.rs
 use std::collections::{HashMap, VecDeque};
 use super::super::activity::{ActivityRecord, Activity, ActivityCategory};
-use super::super::planning::{Schedule, PlannedActivity, PlannedActivityId};
+use super::super::planning::{Schedule, PlannedActivity};
+use crate::shared_kernel::ids::PlannedActivityId;
 use super::super::cycle::CropCycle;
-use super::economic_variance::CostVariance;
+use super::economic_variance::{CostVariance, EconomicDataProvider};
 
 // --- NEW: ConfidenceScore ---
 #[derive(Debug, Clone, PartialEq)]
@@ -165,28 +166,28 @@ impl VarianceService {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use super::super::super::activity::{Activity, ActivityCategory, ActivityRecord, IntegrityStatus};
-    use super::super::super::planning::{Schedule, PlannedActivity, ActivityStatus};
-    use crate::shared_kernel::ids::{CycleId, CropId, AreaId};
-    use crate::shared_kernel::time::Period;
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use super::super::super::activity::{Activity, ActivityCategory, ActivityRecord, IntegrityStatus};
+        use super::super::super::planning::{Schedule, PlannedActivity, ActivityStatus};
+        use crate::shared_kernel::ids::{CycleId, CropId, AreaId, ScheduleId, PlannedActivityId};
+        use crate::shared_kernel::time::Period;
 
     fn create_test_schedule() -> Schedule {
         let mut schedule = Schedule::new(
-            CycleId("cycle-1".to_string()),
+            CycleId::new(),
             super::super::super::planning::ScheduleAnchor::CycleStart,
             1500,
         );
         schedule.add_planned_activity(PlannedActivity {
-            id: super::super::super::planning::PlannedActivityId(uuid::Uuid::new_v4().to_string()),
+            id: PlannedActivityId::new(),
             category: ActivityCategory::Sowing,
             relative_day: 0,
             status: ActivityStatus::Planned,
         });
         schedule.add_planned_activity(PlannedActivity {
-            id: super::super::super::planning::PlannedActivityId(uuid::Uuid::new_v4().to_string()),
+            id: PlannedActivityId::new(),
             category: ActivityCategory::Maintenance,
             relative_day: 15,
             status: ActivityStatus::Planned,
@@ -197,8 +198,8 @@ mod tests {
     fn create_test_cycle() -> CropCycle {
         let period = Period::new(1000, 2000).unwrap();
         CropCycle::new(
-            CropId("crop-1".to_string()),
-            AreaId("area-1".to_string()),
+            CropId::new(),
+            AreaId::new(),
             period,
         )
     }

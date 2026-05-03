@@ -1,20 +1,20 @@
 // finance/domain/budget.rs
-use crate::shared_kernel::ids::{BudgetId, CycleId};
+use crate::shared_kernel::ids::{BudgetId, CycleId, PlannedActivityId, ActivityRecordId};
 use crate::shared_kernel::time::Period;
 use crate::shared_kernel::money::{Money, ExchangeRateProvider};
 use crate::finance::error::FinanceError;
 use std::collections::HashMap;
 
+#[derive(Clone)]
 pub struct Budget {
     id: BudgetId,
     cycle_id: CycleId,
     period: Period,
     baseline: Money,
     current_expenses: Money,
-    rate_provider: Box<dyn ExchangeRateProvider>,
-    // NEW: Per-activity cost tracking (using String keys for cross-domain compatibility)
-    planned_costs: HashMap<String, Money>,      // Key: PlannedActivityId.0 (String)
-    actual_costs: HashMap<String, Money>,       // Key: activity record ID (String)
+    // Per-activity cost tracking with proper typed IDs (from shared_kernel)
+    planned_costs: HashMap<PlannedActivityId, Money>,
+    actual_costs: HashMap<ActivityRecordId, Money>,
 }
 
 impl Budget {
@@ -22,7 +22,6 @@ impl Budget {
         cycle_id: CycleId,
         period: Period,
         baseline: Money,
-        rate_provider: Box<dyn ExchangeRateProvider>,
     ) -> Self {
         Self {
             id: BudgetId(uuid::Uuid::new_v4().to_string()),
@@ -30,15 +29,52 @@ impl Budget {
             period,
             baseline,
             current_expenses: Money::new(rust_decimal::Decimal::ZERO, baseline.currency),
-            rate_provider,
             planned_costs: HashMap::new(),
             actual_costs: HashMap::new(),
         }
     }
 
-    pub fn register_expense(&mut self, amount: &Money) -> Result<(), FinanceError> {
-        // NO bloqueamos si supera el presupuesto (filosofía imperfección controlada)
-        self.current_expenses = self.current_expenses.add(amount)
+    /// Register a general expense (not linked to a specific activity).
+    /// Does NOT block if it exceeds the budget (imperfection-controlled philosophy).
+    pub fn register_expense(
+        &mut self,
+        amount: &Money,
+        rate_provider: &dyn ExchangeRateProvider,
+    ) -> Result<(), FinanceError> {
+        let converted = if amount.currency != self.baseline.currency {
+            amount.convert_to(self.baseline.currency, rate_provider)
+                .map_err(|e| FinanceError::RateError(e))?
+        } else {
+            amount.clone()
+        };
+        
+        self.current_expenses = self.current_expenses.add(&converted)
+            .map_err(|e| FinanceError::RateError(e))?;
+        Ok(())
+    }
+
+    /// Plan a cost for a specific activity (before execution).
+    pub fn plan_cost(&mut self, activity_id: PlannedActivityId, amount: Money) {
+        self.planned_costs.insert(activity_id, amount);
+    }
+
+    /// Record an actual cost for a specific activity record.
+    /// Also updates current_expenses (with currency conversion if needed).
+    pub fn record_actual_cost(
+        &mut self,
+        record_id: ActivityRecordId,
+        amount: &Money,
+        rate_provider: &dyn ExchangeRateProvider,
+    ) -> Result<(), FinanceError> {
+        let converted = if amount.currency != self.baseline.currency {
+            amount.convert_to(self.baseline.currency, rate_provider)
+                .map_err(|e| FinanceError::RateError(e))?
+        } else {
+            amount.clone()
+        };
+        
+        self.actual_costs.insert(record_id, converted.clone());
+        self.current_expenses = self.current_expenses.add(&converted)
             .map_err(|e| FinanceError::RateError(e))?;
         Ok(())
     }
@@ -74,30 +110,14 @@ impl Budget {
         &self.current_expenses
     }
 
-    // --- NEW: Per-activity cost tracking ---
-    
-    /// Sets the planned cost for a specific planned activity (using String key for cross-domain compatibility).
-    pub fn set_planned_cost(&mut self, planned_id: String, cost: Money) {
-        self.planned_costs.insert(planned_id, cost);
-    }
-
-    /// Registers an actual expense and associates it with an activity record ID.
-    /// Also updates current_expenses (for backward compatibility).
-    pub fn register_expense_for_activity(&mut self, amount: &Money, activity_record_id: String) -> Result<(), FinanceError> {
-        self.actual_costs.insert(activity_record_id, *amount);
-        self.current_expenses = self.current_expenses.add(amount)
-            .map_err(|e| FinanceError::RateError(e))?;
-        Ok(())
-    }
-
     /// Gets the planned cost for a specific planned activity.
-    pub fn get_planned_cost(&self, planned_id: &str) -> Option<Money> {
-        self.planned_costs.get(planned_id).copied()
+    pub fn get_planned_cost(&self, planned_id: &PlannedActivityId) -> Option<Money> {
+        self.planned_costs.get(planned_id).cloned()
     }
 
     /// Gets the actual cost for a specific activity record.
-    pub fn get_actual_cost_for_activity(&self, activity_record_id: &str) -> Option<Money> {
-        self.actual_costs.get(activity_record_id).copied()
+    pub fn get_actual_cost_for_activity(&self, record_id: &ActivityRecordId) -> Option<Money> {
+        self.actual_costs.get(record_id).cloned()
     }
 }
 
@@ -124,8 +144,7 @@ mod tests {
     fn create_test_budget() -> Budget {
         let period = Period::new(1000, 2000).unwrap();
         let baseline = Money::new(Decimal::from(1000), Currency::USD);
-        let provider = Box::new(MockRateProvider);
-        Budget::new(CycleId("cycle-1".to_string()), period, baseline, provider)
+        Budget::new(CycleId("cycle-1".to_string()), period, baseline)
     }
 
     #[test]
@@ -139,7 +158,7 @@ mod tests {
     fn register_expense_updates_current() {
         let mut budget = create_test_budget();
         let expense = Money::new(Decimal::from(200), Currency::USD);
-        let result = budget.register_expense(&expense);
+        let result = budget.register_expense(&expense, &MockRateProvider);
         assert!(result.is_ok());
         assert_eq!(budget.current_expenses().amount, Decimal::from(200));
     }
@@ -148,7 +167,7 @@ mod tests {
     fn register_expense_exceeding_budget_no_block() {
         let mut budget = create_test_budget(); // baseline = 1000 USD
         let big_expense = Money::new(Decimal::from(1500), Currency::USD); // exceeds baseline
-        let result = budget.register_expense(&big_expense);
+        let result = budget.register_expense(&big_expense, &MockRateProvider);
         assert!(result.is_ok()); // NO error! (imperfection-controlled)
         assert_eq!(budget.current_expenses().amount, Decimal::from(1500));
     }
@@ -157,7 +176,7 @@ mod tests {
     fn get_remaining_under_budget() {
         let mut budget = create_test_budget(); // baseline = 1000
         let expense = Money::new(Decimal::from(300), Currency::USD);
-        budget.register_expense(&expense).unwrap();
+        budget.register_expense(&expense, &MockRateProvider).unwrap();
         let remaining = budget.get_remaining().unwrap();
         assert_eq!(remaining.amount, Decimal::from(700)); // 1000 - 300
     }
@@ -166,7 +185,7 @@ mod tests {
     fn get_variance_over_budget() {
         let mut budget = create_test_budget(); // baseline = 1000
         let expense = Money::new(Decimal::from(1200), Currency::USD);
-        budget.register_expense(&expense).unwrap();
+        budget.register_expense(&expense, &MockRateProvider).unwrap();
         let variance = budget.get_variance().unwrap();
         assert_eq!(variance.amount, Decimal::from(200)); // 1200 - 1000 = 200 over
     }
@@ -176,25 +195,37 @@ mod tests {
     fn finance_economic_provider_integrates_with_budget() {
         use crate::agriculture::domain::services::economic_variance::EconomicDataProvider;
         use crate::finance::infrastructure::FinanceEconomicProvider;
-        use crate::agriculture::domain::PlannedActivityId;
+        use crate::finance::application::ports::budget_repository::{BudgetRepository, InMemoryBudgetRepository};
+        use crate::shared_kernel::ids::{PlannedActivityId, ActivityRecordId, BudgetId};
+        use std::sync::Arc;
 
         let period = Period::new(1000, 2000).unwrap();
         let baseline = Money::new(Decimal::from(1000), Currency::USD);
-        let provider = Box::new(MockRateProvider);
-        let mut budget = Budget::new(CycleId("cycle-1".to_string()), period, baseline, provider);
+        let mut budget = Budget::new(CycleId::new(), period, baseline);
 
-        // Set planned cost for an activity (using String key)
-        let planned_id = PlannedActivityId("p1".to_string());
+        // Get the generated budget ID for later lookup
+        let budget_id = budget.id().clone();
+
+        // Set planned cost for an activity (using PlannedActivityId from shared_kernel)
+        let planned_id = PlannedActivityId::new();
         let planned_cost = Money::new(Decimal::from(100), Currency::USD);
-        budget.set_planned_cost(planned_id.0.clone(), planned_cost);
+        budget.plan_cost(planned_id.clone(), planned_cost);
 
         // Register actual expense for an activity record
-        let activity_record_id = "rec-1".to_string();
+        let activity_record_id = ActivityRecordId::new();
         let actual_cost = Money::new(Decimal::from(120), Currency::USD);
-        budget.register_expense_for_activity(&actual_cost, activity_record_id.clone()).unwrap();
+        budget.record_actual_cost(activity_record_id.clone(), &actual_cost, &MockRateProvider).unwrap();
 
-        // Create FinanceEconomicProvider with this budget
-        let finance_provider = FinanceEconomicProvider::new(budget);
+        // Create repository and add budget
+        let mut repo = InMemoryBudgetRepository::new();
+        repo.save(budget);
+        let saved_budget = repo.find_by_id(&budget_id).unwrap();
+
+        // Create FinanceEconomicProvider with budget_id + repository
+        let finance_provider = FinanceEconomicProvider::new(
+            saved_budget.id().clone(),
+            Arc::new(repo)
+        );
 
         // Test: get_planned_cost
         let result_planned = finance_provider.get_planned_cost(&planned_id);

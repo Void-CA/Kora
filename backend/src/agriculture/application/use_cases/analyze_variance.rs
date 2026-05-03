@@ -1,40 +1,41 @@
 // agriculture/application/use_cases/analyze_variance.rs
-use crate::agriculture::domain::services::variance_service::{VarianceService, VarianceConfig};
-use crate::agriculture::domain::services::economic_variance::{EconomicDataProvider, EconomicVarianceReport, EconomicVarianceService};
-use crate::agriculture::domain::services::variance_service::VarianceReport;
+use crate::agriculture::domain::services::variance_service::VarianceReport as TimingReport;
+use crate::agriculture::domain::services::economic_variance::{
+    EconomicDataProvider, 
+    EconomicVarianceReport
+};
+use crate::agriculture::domain::planning::Schedule;
+use crate::agriculture::domain::cycle::CropCycle;
+use crate::agriculture::domain::services::variance_service::VarianceConfig;
 
-use crate::agriculture::domain::{planning::Schedule, cycle::CropCycle};
-// --- INPUT: What the use case needs to execute ---
-pub struct AnalyzeVarianceInput<P>
-where
-    P: EconomicDataProvider,
-{
+/// Input: Acepta tanto timing-only como economic analysis
+/// REGLA: Application layer usa dyn Trait (dynamic dispatch)
+pub struct AnalyzeVarianceInput {
     pub schedule: Schedule,
     pub cycle: CropCycle,
     pub config: VarianceConfig,
-    pub economic_provider: Option<P>,
+    pub economic_provider: Option<Box<dyn EconomicDataProvider>>,
 }
 
-// --- OUTPUT: What the use case returns ---
+/// Output: Both reports (economic is Optional)
 pub struct AnalyzeVarianceOutput {
-    pub timing_report: VarianceReport,
-    pub economic_report: Option<EconomicVarianceReport>,  // None if no provider given
+    pub timing_report: TimingReport,
+    pub economic_report: Option<EconomicVarianceReport>,
 }
 
-pub fn execute<P>(
-    input: AnalyzeVarianceInput<P>,
-) -> AnalyzeVarianceOutput
-where
-    P: EconomicDataProvider,
-{
-    let timing_report = VarianceService::analyze_with_config(
+/// Use Case: Analyze Variance (Timing + Optional Economic)
+pub fn execute(input: AnalyzeVarianceInput) -> AnalyzeVarianceOutput {
+    let timing_report = crate::agriculture::domain::services::variance_service::VarianceService::analyze_with_config(
         &input.schedule,
         &input.cycle,
         &input.config,
     );
 
     let economic_report = input.economic_provider.as_ref().map(|provider| {
-        EconomicVarianceService::analyze_costs(&timing_report.matched, provider)
+        crate::agriculture::domain::services::economic_variance::EconomicVarianceService::analyze_costs(
+            &timing_report.matched,
+            provider.as_ref(),
+        )
     });
 
     AnalyzeVarianceOutput {
@@ -47,50 +48,49 @@ where
 mod tests {
     use super::*;
     use crate::agriculture::domain::{
-        planning::{Schedule, ScheduleAnchor, PlannedActivity, PlannedActivityId},
+        planning::{Schedule, ScheduleAnchor, PlannedActivity, ActivityStatus},
         cycle::CropCycle,
         activity::{Activity, ActivityCategory}
     };
-
     use crate::agriculture::domain::services::variance_service::{TimingVariance, VarianceConfig};
-    use crate::shared_kernel::ids::{CycleId, CropId, AreaId};
+    use crate::shared_kernel::ids::{CycleId, CropId, AreaId, PlannedActivityId};
     use crate::shared_kernel::time::Period;
     use crate::shared_kernel::money::{Money, Currency};
     use rust_decimal::Decimal;
+    use crate::agriculture::domain::services::economic_variance::EconomicDataProvider;
 
     // Test: Complete flow - Timing + Economic analysis
     #[test]
     fn use_case_analyze_variance_complete_flow() {
         // --- GIVEN: Schedule with planned activities ---
-        let cycle_id = CycleId("cycle-1".to_string());
         let mut schedule = Schedule::new(
-            cycle_id.clone(),
+            CycleId::new(),
             ScheduleAnchor::SowingDate,
             1500,  // anchor date
         );
 
-        let planned_1 = PlannedActivityId("p-sowing-1".to_string());
+        let planned_1 = PlannedActivityId::new();
         schedule.add_planned_activity(PlannedActivity {
             id: planned_1.clone(),
             category: ActivityCategory::Sowing,
             relative_day: 0,
-            status: crate::agriculture::domain::planning::ActivityStatus::Planned,
+            status: ActivityStatus::Planned,
         });
 
         // --- GIVEN: CropCycle with executed activities ---
         let period = Period::new(1000, 2000).unwrap();
         let mut cycle = CropCycle::new(
-            CropId("crop-1".to_string()),
-            AreaId("area-1".to_string()),
+            CropId::new(),
+            AreaId::new(),
             period,
         );
 
         // Activity 1: Sowing ON TIME (timestamp 1500)
         let activity1 = Activity::new(1500, ActivityCategory::Sowing);
-        let record1 = cycle.register_activity(activity1).unwrap();
+        let _record1 = cycle.register_activity(activity1).unwrap();
 
         // --- WHEN: Execute use case (timing only first) ---
-        let input= AnalyzeVarianceInput {
+        let input = AnalyzeVarianceInput {
             schedule,
             cycle,
             config: VarianceConfig {
@@ -110,7 +110,7 @@ mod tests {
 
         // Verify timing details
         let matched = &output.timing_report.matched[0];
-        assert_eq!(matched.planned_id.as_str(), "p-sowing-1");
+        assert_eq!(matched.planned_id.as_str(), planned_1.as_str());
         assert_eq!(matched.variance, TimingVariance::OnTime);
     }
 
@@ -118,26 +118,25 @@ mod tests {
     #[test]
     fn use_case_with_economic_analysis() {
         // --- GIVEN: Schedule ---
-        let cycle_id = CycleId("cycle-1".to_string());
         let mut schedule = Schedule::new(
-            cycle_id.clone(),
+            CycleId::new(),
             ScheduleAnchor::SowingDate,
             1500,
         );
 
-        let planned_1 = PlannedActivityId("p-sowing-1".to_string());
+        let planned_1 = PlannedActivityId::new();
         schedule.add_planned_activity(PlannedActivity {
             id: planned_1.clone(),
             category: ActivityCategory::Sowing,
             relative_day: 0,
-            status: crate::agriculture::domain::planning::ActivityStatus::Planned,
+            status: ActivityStatus::Planned,
         });
 
         // --- GIVEN: CropCycle ---
         let period = Period::new(1000, 2000).unwrap();
         let mut cycle = CropCycle::new(
-            CropId("crop-1".to_string()),
-            AreaId("area-1".to_string()),
+            CropId::new(),
+            AreaId::new(),
             period,
         );
 
@@ -147,10 +146,10 @@ mod tests {
         // --- GIVEN: Mock EconomicDataProvider ---
         struct MockProvider;
         impl EconomicDataProvider for MockProvider {
-            fn get_planned_cost(&self, _planned_id: &PlannedActivityId) -> Option<Money> {
+            fn get_planned_cost(&self, _planned_id: &crate::shared_kernel::ids::PlannedActivityId) -> Option<Money> {
                 Some(Money::new(Decimal::from(100), Currency::USD))
             }
-            fn get_actual_cost(&self, _record_id: &str) -> Option<Money> {
+            fn get_actual_cost(&self, _record_id: &crate::shared_kernel::ids::ActivityRecordId) -> Option<Money> {
                 Some(Money::new(Decimal::from(120), Currency::USD))
             }
         }
@@ -164,7 +163,7 @@ mod tests {
                 enable_early_detection: false,
                 enable_confidence_scoring: false,
             },
-            economic_provider: Some(MockProvider),
+            economic_provider: Some(Box::new(MockProvider)),
         };
 
         let output = execute(input);
