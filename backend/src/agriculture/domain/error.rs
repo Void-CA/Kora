@@ -22,4 +22,10 @@ pub enum AgricultureError {
     // Errores de Validación (Inputs inválidos)
     InvalidMeasurement,
     InvalidPeriod,
+    
+    // Errores de transición de estado
+    InvalidStateTransition,
+    
+    // Errores de planificación
+    EmptyPlan,
 }
