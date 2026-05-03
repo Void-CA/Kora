@@ -123,3 +123,97 @@ impl Budget {
         self.actual_costs.get(record_id).cloned()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::str::FromStr;
+    use crate::shared_kernel::ids::CycleId;
+    use crate::shared_kernel::time::Period;
+    use crate::shared_kernel::money::{Money, Currency, ExchangeRateProvider};
+    use crate::agriculture::domain::ids::{PlannedActivityId, ActivityRecordId};
+
+    struct MockRateProvider;
+    impl ExchangeRateProvider for MockRateProvider {
+        fn get_rate(&self, from: Currency, to: Currency) -> Result<rust_decimal::Decimal, crate::shared_kernel::money::RateError> {
+            match (from, to) {
+                (Currency::USD, Currency::NIO) => Ok(rust_decimal::Decimal::from(36)),
+                (Currency::NIO, Currency::USD) => Ok(rust_decimal::Decimal::from_str("0.0277").unwrap()),
+                _ => Err(crate::shared_kernel::money::RateError::RateNotAvailable(from, to)),
+            }
+        }
+    }
+
+    fn create_test_budget() -> Budget {
+        let period = Period::new(1000, 2000).unwrap();
+        let baseline = Money::new(rust_decimal::Decimal::from(1000), Currency::USD);
+        Budget::new(CycleId::new(), period, baseline)
+    }
+
+    #[test]
+    fn budget_new_initializes_correctly() {
+        let budget = create_test_budget();
+        assert_eq!(budget.current_expenses().amount, rust_decimal::Decimal::ZERO);
+        assert_eq!(budget.baseline().amount, rust_decimal::Decimal::from(1000));
+    }
+
+    #[test]
+    fn register_expense_updates_current() {
+        let mut budget = create_test_budget();
+        let expense = Money::new(rust_decimal::Decimal::from(200), Currency::USD);
+        let result = budget.register_expense(&expense, &MockRateProvider);
+        assert!(result.is_ok());
+        assert_eq!(budget.current_expenses().amount, rust_decimal::Decimal::from(200));
+    }
+
+    #[test]
+    fn register_expense_exceeding_budget_no_block() {
+        let mut budget = create_test_budget();
+        let big_expense = Money::new(rust_decimal::Decimal::from(1500), Currency::USD);
+        let result = budget.register_expense(&big_expense, &MockRateProvider);
+        assert!(result.is_ok());
+        assert_eq!(budget.current_expenses().amount, rust_decimal::Decimal::from(1500));
+    }
+
+    #[test]
+    fn get_remaining_under_budget() {
+        let mut budget = create_test_budget();
+        let expense = Money::new(rust_decimal::Decimal::from(300), Currency::USD);
+        budget.register_expense(&expense, &MockRateProvider).unwrap();
+        let remaining = budget.get_remaining().unwrap();
+        assert_eq!(remaining.amount, rust_decimal::Decimal::from(700));
+    }
+
+    #[test]
+    fn get_variance_over_budget() {
+        let mut budget = create_test_budget();
+        let expense = Money::new(rust_decimal::Decimal::from(1200), Currency::USD);
+        budget.register_expense(&expense, &MockRateProvider).unwrap();
+        let variance = budget.get_variance().unwrap();
+        assert_eq!(variance.amount, rust_decimal::Decimal::from(200));
+    }
+
+    #[test]
+    fn plan_cost_stores_planned_activity() {
+        let mut budget = create_test_budget();
+        let planned_id = PlannedActivityId::new();
+        let cost = Money::new(rust_decimal::Decimal::from(100), Currency::USD);
+        budget.plan_cost(planned_id.clone(), cost);
+        
+        let retrieved = budget.get_planned_cost(planned_id.as_str());
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().amount, rust_decimal::Decimal::from(100));
+    }
+
+    #[test]
+    fn record_actual_cost_stores_activity_record() {
+        let mut budget = create_test_budget();
+        let record_id = ActivityRecordId::new();
+        let cost = Money::new(rust_decimal::Decimal::from(120), Currency::USD);
+        budget.record_actual_cost(record_id.clone(), &cost, &MockRateProvider).unwrap();
+        
+        let retrieved = budget.get_actual_cost_for_activity(record_id.as_str());
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().amount, rust_decimal::Decimal::from(120));
+    }
+}
