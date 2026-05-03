@@ -1,11 +1,15 @@
 .
 ├── agriculture
 │   ├── application
+│   │   ├── dtos
+│   │   │   ├── analyze_variance_dto.rs
+│   │   │   └── mod.rs
 │   │   ├── mod.rs
 │   │   ├── ports
 │   │   │   ├── cycle_repository.rs
 │   │   │   ├── mod.rs
-│   │   │   └── schedule_repository.rs
+│   │   │   ├── schedule_repository.rs
+│   │   │   └── unit_of_work.rs
 │   │   └── use_cases
 │   │       ├── analyze_variance.rs
 │   │       ├── mod.rs
@@ -18,6 +22,7 @@
 │   │   ├── cycle.rs
 │   │   ├── error.rs
 │   │   ├── farm.rs
+│   │   ├── ids.rs
 │   │   ├── mod.rs
 │   │   ├── planning.rs
 │   │   └── services
@@ -32,25 +37,34 @@
 │   │       └── mod.rs
 │   ├── mod.rs
 │   └── structure.md
+├── application
+│   └── error.rs
 ├── finance
 │   ├── application
+│   │   ├── mod.rs
+│   │   └── ports
+│   │       ├── budget_repository.rs
+│   │       └── mod.rs
 │   ├── domain
-│   │   ├── adapters
-│   │   │   ├── agriculture_economic_provider.rs
-│   │   │   └── mod.rs
 │   │   ├── budget.rs
 │   │   ├── expense.rs
+│   │   ├── ids.rs
 │   │   └── mod.rs
 │   ├── error.rs
 │   ├── infrastructure
+│   │   ├── adapters
+│   │   │   ├── agriculture_economic_provider.rs
+│   │   │   └── mod.rs
+│   │   └── mod.rs
+│   └── mod.rs
+├── integration
 │   └── mod.rs
 ├── labor
-│   ├── application
 │   ├── domain
+│   │   ├── ids.rs
 │   │   ├── mod.rs
 │   │   ├── worker.rs
 │   │   └── work_record.rs
-│   ├── infrastructure
 │   └── mod.rs
 ├── main.rs
 ├── shared_kernel
@@ -73,4 +87,5 @@
     ├── integration_test.rs
     └── mod.rs
 
-23 directories, 51 files
+25 directories, 63 files
+May 3, 1:23 PM, 2026
