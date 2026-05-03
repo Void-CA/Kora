@@ -1,5 +1,5 @@
 // labor/domain/worker.rs
-use crate::shared_kernel::ids::WorkerId;
+use crate::labor::domain::ids::WorkerId;
 
 #[derive(Debug)]
 pub struct Worker {

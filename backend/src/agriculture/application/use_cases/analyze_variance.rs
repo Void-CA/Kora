@@ -1,4 +1,5 @@
 // agriculture/application/use_cases/analyze_variance.rs
+use crate::shared_kernel::money::Money;
 use crate::agriculture::domain::services::variance_service::VarianceReport as TimingReport;
 use crate::agriculture::domain::services::economic_variance::{
     EconomicDataProvider, 
@@ -53,7 +54,8 @@ mod tests {
         activity::{Activity, ActivityCategory}
     };
     use crate::agriculture::domain::services::variance_service::{TimingVariance, VarianceConfig};
-    use crate::shared_kernel::ids::{CycleId, CropId, AreaId, PlannedActivityId};
+    use crate::shared_kernel::ids::{CycleId, CropId, AreaId};
+    use crate::agriculture::domain::ids::PlannedActivityId;
     use crate::shared_kernel::time::Period;
     use crate::shared_kernel::money::{Money, Currency};
     use rust_decimal::Decimal;
@@ -146,10 +148,10 @@ mod tests {
         // --- GIVEN: Mock EconomicDataProvider ---
         struct MockProvider;
         impl EconomicDataProvider for MockProvider {
-            fn get_planned_cost(&self, _planned_id: &crate::shared_kernel::ids::PlannedActivityId) -> Option<Money> {
+            fn get_planned_cost(&self, _planned_id: &crate::agriculture::domain::ids::PlannedActivityId) -> Option<Money> {
                 Some(Money::new(Decimal::from(100), Currency::USD))
             }
-            fn get_actual_cost(&self, _record_id: &crate::shared_kernel::ids::ActivityRecordId) -> Option<Money> {
+            fn get_actual_cost(&self, _record_id: &crate::agriculture::domain::ids::ActivityRecordId) -> Option<Money> {
                 Some(Money::new(Decimal::from(120), Currency::USD))
             }
         }

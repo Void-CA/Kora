@@ -1,5 +1,6 @@
 // agriculture/domain/planning.rs
-use crate::shared_kernel::ids::{ScheduleId, CycleId, PlannedActivityId};
+use crate::shared_kernel::ids::CycleId;
+use super::ids::{ScheduleId, PlannedActivityId};
 use super::activity::ActivityCategory;
 
 #[derive(Debug, Clone)]

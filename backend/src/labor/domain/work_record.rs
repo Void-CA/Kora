@@ -1,6 +1,7 @@
 // labor/domain/work_record.rs
-use crate::shared_kernel::ids::{WorkerId, CycleId, AreaId};
-use crate::shared_kernel::time::Period;
+use crate::labor::domain::ids::WorkerId;
+use crate::shared_kernel::ids::{CycleId, AreaId};
+ 
 
 #[derive(Debug)]
 pub enum WorkContext {

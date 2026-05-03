@@ -1,10 +1,10 @@
 // finance/infrastructure/adapters/agriculture_economic_provider.rs
-use std::sync::Arc;
 use crate::shared_kernel::money::Money;
-use crate::shared_kernel::ids::{PlannedActivityId, ActivityRecordId};
+use std::sync::Arc;
+use crate::agriculture::domain::ids::{PlannedActivityId, ActivityRecordId};
 use crate::agriculture::domain::services::economic_variance::EconomicDataProvider;
 use crate::finance::application::ports::budget_repository::BudgetRepository;
-use crate::shared_kernel::ids::BudgetId;
+use crate::finance::domain::ids::BudgetId;
 
 /// Finance-side adapter that implements agriculture's EconomicDataProvider trait.
 /// This allows agriculture's EconomicVarianceService to pull cost data from finance
@@ -25,13 +25,13 @@ impl FinanceEconomicProvider {
 
 impl EconomicDataProvider for FinanceEconomicProvider {
     fn get_planned_cost(&self, planned_id: &PlannedActivityId) -> Option<Money> {
-        // Resolve Budget by ID using repository (no direct exposure of Budget entity)
+        // Translate agriculture ID to string for finance repository
         let budget = self.budget_repo.find_by_id(&self.budget_id)?;
-        budget.get_planned_cost(planned_id)
+        budget.get_planned_cost(planned_id.as_str())
     }
 
     fn get_actual_cost(&self, record_id: &ActivityRecordId) -> Option<Money> {
         let budget = self.budget_repo.find_by_id(&self.budget_id)?;
-        budget.get_actual_cost_for_activity(record_id)
+        budget.get_actual_cost_for_activity(record_id.as_str())
     }
 }

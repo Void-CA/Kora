@@ -4,7 +4,8 @@
 use crate::agriculture::domain::{CropCycle, Schedule, ScheduleAnchor, PlannedActivity, Activity, ActivityStatus, IntegrityStatus};
 use crate::agriculture::domain::activity::ActivityCategory;
 use crate::finance::domain::Budget;
-use crate::shared_kernel::ids::{CycleId, CropId, AreaId, BudgetId, PlannedActivityId};
+use crate::agriculture::domain::ids::{PlannedActivityId};
+use crate::shared_kernel::ids::{CycleId, CropId, AreaId};
 use crate::shared_kernel::time::Period;
 use crate::shared_kernel::money::{Money, Currency, ExchangeRateProvider, RateError};
 use rust_decimal::Decimal;
@@ -126,9 +127,10 @@ mod tests_integracion {
         // - Produzca VarianceReport { a_tiempo: Vec<..>, retrasado: Vec<..>, desplanificado: Vec<..> }
 
         // 3. Remanente del presupuesto
+        // Gastamos ~310.81 USD de 1000 USD presupuestados → Remanente POSITIVO
         let remanente = presupuesto.get_remaining().unwrap();
-        assert!(remanente.amount < Decimal::ZERO); // Negativo = sobre gasto
-        println!("Remanente: {:?} (negativo = sobre gasto)", remanente);
+        assert!(remanente.amount > Decimal::ZERO); // Positivo = nos sobra presupuesto
+        println!("Remanente: {:?} (positivo = nos sobra, negativo = sobre gasto)", remanente);
 
         // --- CONCLUSIÓN DE ESTE TEST ---
         // El dominio soporta:

@@ -1,6 +1,6 @@
 // finance/application/ports/budget_repository.rs
 use crate::finance::domain::budget::Budget;
-use crate::shared_kernel::ids::BudgetId;
+use crate::finance::domain::ids::BudgetId;
 
 /// Port: Repository interface for Budget persistence
 pub trait BudgetRepository {

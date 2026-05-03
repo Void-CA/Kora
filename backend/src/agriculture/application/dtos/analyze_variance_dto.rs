@@ -1,6 +1,7 @@
 // agriculture/application/dtos/analyze_variance_dto.rs
 use crate::agriculture::domain::services::variance_service::VarianceConfig;
-use crate::shared_kernel::ids::{CycleId, ScheduleId};
+use crate::shared_kernel::ids::{CycleId, CropId, AreaId};
+use crate::agriculture::domain::ids::ScheduleId;
 
 /// Input DTO for analyze_variance use case
 /// Contains ONLY data, NO dependencies

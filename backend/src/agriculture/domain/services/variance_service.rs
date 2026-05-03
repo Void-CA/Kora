@@ -2,7 +2,7 @@
 use std::collections::{HashMap, VecDeque};
 use super::super::activity::{ActivityRecord, Activity, ActivityCategory};
 use super::super::planning::{Schedule, PlannedActivity};
-use crate::shared_kernel::ids::PlannedActivityId;
+use super::super::ids::{PlannedActivityId, ActivityRecordId};
 use super::super::cycle::CropCycle;
 use super::economic_variance::{CostVariance, EconomicDataProvider};
 
@@ -171,23 +171,23 @@ impl VarianceService {
         use super::*;
         use super::super::super::activity::{Activity, ActivityCategory, ActivityRecord, IntegrityStatus};
         use super::super::super::planning::{Schedule, PlannedActivity, ActivityStatus};
-        use crate::shared_kernel::ids::{CycleId, CropId, AreaId, ScheduleId, PlannedActivityId};
+        use crate::shared_kernel::ids::{CycleId, CropId, AreaId};
         use crate::shared_kernel::time::Period;
 
     fn create_test_schedule() -> Schedule {
         let mut schedule = Schedule::new(
             CycleId::new(),
-            super::super::super::planning::ScheduleAnchor::CycleStart,
+            crate::agriculture::domain::planning::ScheduleAnchor::CycleStart,
             1500,
         );
         schedule.add_planned_activity(PlannedActivity {
-            id: PlannedActivityId::new(),
+            id: crate::agriculture::domain::ids::PlannedActivityId::new(),
             category: ActivityCategory::Sowing,
             relative_day: 0,
             status: ActivityStatus::Planned,
         });
         schedule.add_planned_activity(PlannedActivity {
-            id: PlannedActivityId::new(),
+            id: crate::agriculture::domain::ids::PlannedActivityId::new(),
             category: ActivityCategory::Maintenance,
             relative_day: 15,
             status: ActivityStatus::Planned,

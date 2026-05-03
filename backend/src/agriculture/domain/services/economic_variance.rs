@@ -1,6 +1,6 @@
 // agriculture/domain/services/economic_variance.rs
 use crate::shared_kernel::money::{Money, RateError};
-use crate::shared_kernel::ids::{PlannedActivityId, ActivityRecordId};
+use crate::agriculture::domain::ids::{PlannedActivityId, ActivityRecordId};
 use super::super::services::variance_service::MatchedActivity;
 
 // --- TRAIT: EconomicDataProvider (lives in agriculture, receives MINIMAL data) ---
@@ -161,7 +161,7 @@ impl EconomicVarianceService {
 mod tests {
     use super::*;
     use crate::shared_kernel::money::{Money, Currency};
-    use crate::shared_kernel::ids::{PlannedActivityId, ActivityRecordId};
+    use crate::agriculture::domain::ids::{PlannedActivityId, ActivityRecordId};
     use rust_decimal::Decimal;
     use crate::agriculture::domain::activity::{Activity, ActivityCategory, ActivityRecord, IntegrityStatus};
     use super::super::variance_service::{TimingVariance, ConfidenceScore};
@@ -215,9 +215,9 @@ mod tests {
         };
 
         // Setup mock data
-        let planned_id = PlannedActivityId("p1".to_string());
+        let planned_id = PlannedActivityId::new();
         provider.planned_costs.insert(
-            "p1".to_string(),
+            planned_id.as_str().to_string(),
             Money::new(Decimal::from(100), Currency::USD),
         );
 
@@ -255,7 +255,7 @@ mod tests {
             actual_costs: std::collections::HashMap::new(),
         };
 
-        let planned_id = PlannedActivityId("p1".to_string());
+        let planned_id = PlannedActivityId::new();
         let activity = Activity::new(1000, ActivityCategory::Sowing);
         let record = ActivityRecord::new(activity, vec![IntegrityStatus::Valid]);
         let matched = MatchedActivity {
@@ -287,7 +287,7 @@ mod tests {
         let activity1 = Activity::new(1000, ActivityCategory::Sowing);
         let activity1_id = activity1.id().as_str().to_string();  // FIXED: use as_str()
         provider.actual_costs.insert(activity1_id, Money::new(Decimal::from(120), Currency::USD));
-
+        
         // Activity 2: planned=200, actual=180
         provider.planned_costs.insert("p2".to_string(), Money::new(Decimal::from(200), Currency::USD));
         
@@ -296,7 +296,7 @@ mod tests {
         provider.actual_costs.insert(activity2_id, Money::new(Decimal::from(180), Currency::USD));
 
         let matched1 = MatchedActivity {
-            planned_id: PlannedActivityId("p1".to_string()),
+            planned_id: PlannedActivityId::new(),
             record: ActivityRecord::new(activity1, vec![IntegrityStatus::Valid]),
             variance: TimingVariance::OnTime,
             confidence: ConfidenceScore::High,
@@ -304,7 +304,7 @@ mod tests {
         };
 
         let matched2 = MatchedActivity {
-            planned_id: PlannedActivityId("p2".to_string()),
+            planned_id: PlannedActivityId::new(),
             record: ActivityRecord::new(activity2, vec![IntegrityStatus::Valid]),
             variance: TimingVariance::OnTime,
             confidence: ConfidenceScore::High,

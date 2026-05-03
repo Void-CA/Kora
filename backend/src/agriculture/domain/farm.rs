@@ -1,5 +1,6 @@
 // agriculture/domain/farm.rs
-use crate::shared_kernel::ids::{FarmId, AreaId};
+use crate::agriculture::domain::ids::FarmId;
+use crate::shared_kernel::ids::AreaId;
 use super::area::Area;
 
 #[derive(Debug)]

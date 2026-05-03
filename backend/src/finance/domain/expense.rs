@@ -1,5 +1,5 @@
 // finance/domain/expense.rs
-use crate::shared_kernel::ids::{BudgetId, ExpenseId};
+use super::ids::{BudgetId, ExpenseId};
 use crate::shared_kernel::money::Money;
 
 #[derive(Debug, Clone)]

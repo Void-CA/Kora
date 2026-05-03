@@ -6,8 +6,8 @@ pub mod area;
 pub mod crop;
 pub mod planning;
 pub mod analysis;
-
 pub mod services;
+pub mod ids;
 
 pub use error::AgricultureError;
 pub use activity::{ActivityRecord, Activity, IntegrityStatus};
@@ -16,5 +16,5 @@ pub use farm::Farm;
 pub use area::Area;
 pub use crop::Crop;
 pub use planning::{Schedule, ScheduleAnchor, PlannedActivity, ActivityStatus};
-pub use crate::shared_kernel::ids::PlannedActivityId;
+pub use ids::{PlannedActivityId, ActivityRecordId, ScheduleId, ActivityId, FarmId};
 pub use analysis::AnalysisMetric;
