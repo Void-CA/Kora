@@ -230,16 +230,29 @@ pub mod seed {
         }
 
         if let Some(c) = &ciclo_norte {
-            let _ = register_activity_uc::execute(
-                state,
-                RegisterActivityInput {
-                    cycle_id: c.cycle.id().clone(),
-                    timestamp: 1_700_500_000,
-                    category: ActivityCategory::Sowing,
-                    notes: Some("Siembra de maíz híbrido".into()),
-                    mode: register_activity_uc::RegistrationMode::Suggested,
-                },
-            );
+            let planned_sowing = state
+                .schedule_repo
+                .lock()
+                .unwrap()
+                .find_by_cycle_id(c.cycle.id())
+                .and_then(|s| {
+                    s.activities()
+                        .iter()
+                        .find(|p| matches!(p.category, ActivityCategory::Sowing))
+                        .cloned()
+                });
+            if let Some(planned) = planned_sowing {
+                let _ = register_activity_uc::execute(
+                    state,
+                    RegisterActivityInput {
+                        cycle_id: c.cycle.id().clone(),
+                        timestamp: 1_700_000_000,
+                        category: ActivityCategory::Sowing,
+                        notes: Some("Siembra de maíz híbrido".into()),
+                        mode: register_activity_uc::RegistrationMode::ConfirmMatch(planned.id),
+                    },
+                );
+            }
             let _ = register_activity_uc::execute(
                 state,
                 RegisterActivityInput {

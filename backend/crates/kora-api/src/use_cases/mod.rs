@@ -10,6 +10,7 @@ pub mod payroll;
 pub mod incidence;
 pub mod get_cycle_timeline;
 pub mod get_area_dashboard;
+pub mod get_cycle_variance;
 pub mod create_budget;
 pub mod add_planned_activity;
 pub mod link_soil_to_cycle;
