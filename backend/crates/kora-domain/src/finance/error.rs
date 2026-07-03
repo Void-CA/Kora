@@ -4,6 +4,7 @@ use kora_kernel::money::RateError;
 pub enum FinanceError {
     BudgetNotFound,
     InsufficientFunds,
+    NonPositiveRevenue,
     RateError(RateError),
 }
 

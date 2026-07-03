@@ -6,3 +6,4 @@ pub mod soil_analysis_repository;
 pub mod worker_repository;
 pub mod payroll_entry_repository;
 pub mod sanitary_incidence_repository;
+pub mod revenue_repository;

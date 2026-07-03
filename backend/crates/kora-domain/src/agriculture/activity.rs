@@ -75,6 +75,10 @@ impl Activity {
         self.notes = Some(notes);
     }
 
+    pub fn notes(&self) -> Option<&str> {
+        self.notes.as_deref()
+    }
+
     pub fn category(&self) -> &ActivityCategory {
         &self.category
     }

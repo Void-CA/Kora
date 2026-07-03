@@ -82,6 +82,16 @@ pub async fn profitability(
         .map_err(|_| StatusCode::NOT_FOUND)
 }
 
+pub async fn timeline(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> Result<Json<crate::use_cases::get_cycle_timeline::CycleTimeline>, StatusCode> {
+    let cycle_id = CycleId(id);
+    crate::use_cases::get_cycle_timeline::execute(&state, &cycle_id)
+        .map(Json)
+        .ok_or(StatusCode::NOT_FOUND)
+}
+
 fn cycle_to_summary(c: &CropCycle) -> CycleSummary {
     CycleSummary {
         id: c.id().0.clone(),

@@ -9,6 +9,7 @@ use kora_kernel::ids::AreaId;
 
 use crate::state::AppState;
 use crate::use_cases::get_field_history::{self, FieldHistory};
+use crate::use_cases::get_area_dashboard::{self as area_dashboard_uc, AreaDashboard};
 
 #[derive(Serialize)]
 pub struct HistoryResponse {
@@ -63,4 +64,12 @@ pub async fn history(
         schedules: result.schedules.iter().map(|s| s.cycle_id().0.clone()).collect(),
         budgets,
     })
+}
+
+pub async fn dashboard(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> Json<AreaDashboard> {
+    let area_id = AreaId(id);
+    Json(area_dashboard_uc::execute(&state, &area_id))
 }

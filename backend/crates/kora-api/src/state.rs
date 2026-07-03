@@ -7,6 +7,7 @@ use kora_domain::ports::soil_analysis_repository::SoilAnalysisRepository;
 use kora_domain::ports::worker_repository::WorkerRepository;
 use kora_domain::ports::payroll_entry_repository::PayrollEntryRepository;
 use kora_domain::ports::sanitary_incidence_repository::SanitaryIncidenceRepository;
+use kora_domain::ports::revenue_repository::RevenueRepository;
 use kora_domain::agriculture::cycle::CropCycle;
 use kora_domain::agriculture::farm::Farm;
 use kora_kernel::ids::AreaId;
@@ -19,6 +20,7 @@ pub struct AppState {
     pub worker_repo: Arc<Mutex<Box<dyn WorkerRepository + Send>>>,
     pub payroll_repo: Arc<Mutex<Box<dyn PayrollEntryRepository + Send>>>,
     pub incidence_repo: Arc<Mutex<Box<dyn SanitaryIncidenceRepository + Send>>>,
+    pub revenue_repo: Arc<Mutex<Box<dyn RevenueRepository + Send>>>,
     pub farms: Vec<Farm>,
 }
 
@@ -31,6 +33,7 @@ impl AppState {
         use crate::adapters::worker_in_memory::InMemoryWorkerRepository;
         use crate::adapters::payroll_in_memory::InMemoryPayrollEntryRepository;
         use crate::adapters::incidence_in_memory::InMemorySanitaryIncidenceRepository;
+        use crate::adapters::revenue_in_memory::InMemoryRevenueRepository;
         let state = Self {
             cycle_repo: Arc::new(Mutex::new(Box::new(InMemoryCropCycleRepository::new()))),
             schedule_repo: Arc::new(Mutex::new(Box::new(InMemoryScheduleRepository::new()))),
@@ -39,6 +42,7 @@ impl AppState {
             worker_repo: Arc::new(Mutex::new(Box::new(InMemoryWorkerRepository::new()))),
             payroll_repo: Arc::new(Mutex::new(Box::new(InMemoryPayrollEntryRepository::new()))),
             incidence_repo: Arc::new(Mutex::new(Box::new(InMemorySanitaryIncidenceRepository::new()))),
+            revenue_repo: Arc::new(Mutex::new(Box::new(InMemoryRevenueRepository::new()))),
             farms: seed::build_farms(),
         };
         seed::seed_via_use_cases(&state);
@@ -97,6 +101,7 @@ pub mod seed {
     pub fn seed_via_use_cases(state: &AppState) {
         use crate::use_cases::register_cycle::{self, RegisterCycleInput};
         use crate::use_cases::register_expense::{self, RegisterExpenseInput};
+        use crate::use_cases::register_activity::{self as register_activity_uc, RegisterActivityInput};
         use kora_domain::agriculture::activity::ActivityCategory;
         use kora_domain::finance::expense::ExpenseCategory;
         use kora_domain::finance::budget::Budget;
@@ -225,6 +230,24 @@ pub mod seed {
         }
 
         if let Some(c) = &ciclo_norte {
+            let _ = register_activity_uc::execute(
+                state,
+                RegisterActivityInput {
+                    cycle_id: c.cycle.id().clone(),
+                    timestamp: 1_700_500_000,
+                    category: ActivityCategory::Sowing,
+                    notes: Some("Siembra de maíz híbrido".into()),
+                },
+            );
+            let _ = register_activity_uc::execute(
+                state,
+                RegisterActivityInput {
+                    cycle_id: c.cycle.id().clone(),
+                    timestamp: 1_703_000_000,
+                    category: ActivityCategory::Maintenance,
+                    notes: Some("Riego por goteo".into()),
+                },
+            );
             let _ = crate::use_cases::incidence::execute(
                 state,
                 crate::use_cases::incidence::RegisterIncidenceInput {
@@ -235,6 +258,15 @@ pub mod seed {
                     action_taken: "Aplicación de imidacloprid 0.5 L/ha".into(),
                     detected_at: 1_708_000_000,
                     economic_impact: Some(Money::new(Decimal::from(200), Currency::USD)),
+                },
+            );
+            let _ = crate::use_cases::register_revenue::execute(
+                state,
+                crate::use_cases::register_revenue::RegisterRevenueInput {
+                    cycle_id: Some(c.cycle.id().clone()),
+                    amount: Money::new(Decimal::from(7200), Currency::USD),
+                    received_at: 1_718_000_000,
+                    source: kora_domain::finance::revenue::RevenueSource::Harvest,
                 },
             );
         }
