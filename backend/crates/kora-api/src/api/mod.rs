@@ -12,6 +12,7 @@ mod soil;
 mod payroll;
 mod incidence;
 mod revenue;
+mod planning;
 
 use crate::state::AppState;
 
@@ -46,6 +47,7 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/areas/:id/dashboard", get(areas::dashboard))
         .route("/api/soil/area/:area_id", get(soil::list_for_area))
         .route("/api/soil", post(soil::register))
+        .route("/api/soil/link", post(planning::link_soil))
         .route("/api/payroll/workers", get(payroll::list_workers).post(payroll::register_worker))
         .route("/api/payroll/cycle/:cycle_id", get(payroll::list_for_cycle))
         .route("/api/payroll", post(payroll::record_payroll))
@@ -53,6 +55,9 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/incidence", post(incidence::register))
         .route("/api/revenue", post(revenue::register))
         .route("/api/revenue/cycle/:cycle_id", get(revenue::list_for_cycle))
+        .route("/api/budgets", post(planning::create_budget))
+        .route("/api/schedules/cycle/:cycle_id", get(planning::get_schedule))
+        .route("/api/schedules/activities", post(planning::add_planned_activity))
         .with_state(state)
         .layer(cors)
 }

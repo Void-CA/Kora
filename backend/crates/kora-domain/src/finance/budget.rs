@@ -1,10 +1,32 @@
 use crate::agriculture::ids::{PlannedActivityId, ActivityRecordId};
+use crate::finance::expense::ExpenseCategory;
 use kora_kernel::ids::CycleId;
 use kora_kernel::period::Period;
 use kora_kernel::money::{Money, ExchangeRateProvider};
 use crate::finance::error::FinanceError;
 use crate::finance::ids::BudgetId;
 use std::collections::HashMap;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum BudgetCategory {
+    Seeds,
+    Fertilizers,
+    Labor,
+    SoilPrep,
+    Other(String),
+}
+
+impl From<ExpenseCategory> for BudgetCategory {
+    fn from(e: ExpenseCategory) -> Self {
+        match e {
+            ExpenseCategory::Seeds => BudgetCategory::Seeds,
+            ExpenseCategory::Fertilizers => BudgetCategory::Fertilizers,
+            ExpenseCategory::Labor => BudgetCategory::Labor,
+            ExpenseCategory::SoilPrep => BudgetCategory::SoilPrep,
+            ExpenseCategory::Other(s) => BudgetCategory::Other(s),
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct Budget {
@@ -13,6 +35,7 @@ pub struct Budget {
     period: Period,
     baseline: Money,
     current_expenses: Money,
+    estimated_lines: HashMap<BudgetCategory, Money>,
     planned_costs: HashMap<String, Money>,
     actual_costs: HashMap<String, Money>,
 }
@@ -25,6 +48,7 @@ impl Budget {
             period,
             baseline,
             current_expenses: Money::new(rust_decimal::Decimal::ZERO, baseline.currency),
+            estimated_lines: HashMap::new(),
             planned_costs: HashMap::new(),
             actual_costs: HashMap::new(),
         }
@@ -59,6 +83,19 @@ impl Budget {
         Ok(())
     }
 
+    pub fn estimate_category(&mut self, category: BudgetCategory, amount: Money) -> Result<(), FinanceError> {
+        if amount.currency != self.baseline.currency {
+            return Err(FinanceError::RateError(kora_kernel::money::RateError::CurrencyMismatch(
+                amount.currency, self.baseline.currency,
+            )));
+        }
+        let entry = self.estimated_lines.entry(category).or_insert_with(|| {
+            Money::new(rust_decimal::Decimal::ZERO, self.baseline.currency)
+        });
+        *entry = entry.add(&amount).map_err(FinanceError::RateError)?;
+        Ok(())
+    }
+
     pub fn get_remaining(&self) -> Result<Money, FinanceError> {
         self.baseline.subtract(&self.current_expenses).map_err(FinanceError::RateError)
     }
@@ -72,6 +109,7 @@ impl Budget {
     pub fn period(&self) -> &Period { &self.period }
     pub fn baseline(&self) -> &Money { &self.baseline }
     pub fn current_expenses(&self) -> &Money { &self.current_expenses }
+    pub fn estimated_lines(&self) -> &HashMap<BudgetCategory, Money> { &self.estimated_lines }
 
     pub fn get_planned_cost(&self, planned_id: &str) -> Option<Money> {
         self.planned_costs.get(planned_id).cloned()
@@ -134,5 +172,33 @@ mod tests {
         let rid = ActivityRecordId::new();
         b.record_actual_cost(rid.clone(), &Money::new(rust_decimal::Decimal::from(120), Currency::USD), &MockRate).unwrap();
         assert_eq!(b.get_actual_cost_for_activity(rid.as_str()).unwrap().amount, rust_decimal::Decimal::from(120));
+    }
+
+    #[test]
+    fn budget_estimate_category_accumulates() {
+        let period = Period::new(1000, 2000).unwrap();
+        let mut b = Budget::new(CycleId::new(), period, Money::new(rust_decimal::Decimal::from(5000), Currency::USD));
+        b.estimate_category(BudgetCategory::Seeds, Money::new(rust_decimal::Decimal::from(500), Currency::USD)).unwrap();
+        b.estimate_category(BudgetCategory::Seeds, Money::new(rust_decimal::Decimal::from(300), Currency::USD)).unwrap();
+        b.estimate_category(BudgetCategory::Fertilizers, Money::new(rust_decimal::Decimal::from(800), Currency::USD)).unwrap();
+        let lines = b.estimated_lines();
+        assert_eq!(lines.get(&BudgetCategory::Seeds).unwrap().amount, rust_decimal::Decimal::from(800));
+        assert_eq!(lines.get(&BudgetCategory::Fertilizers).unwrap().amount, rust_decimal::Decimal::from(800));
+    }
+
+    #[test]
+    fn budget_estimate_rejects_currency_mismatch() {
+        let period = Period::new(1000, 2000).unwrap();
+        let mut b = Budget::new(CycleId::new(), period, Money::new(rust_decimal::Decimal::from(5000), Currency::USD));
+        let result = b.estimate_category(BudgetCategory::Seeds, Money::new(rust_decimal::Decimal::from(100), Currency::NIO));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn budget_category_from_expense_category() {
+        let from_seeds: BudgetCategory = ExpenseCategory::Seeds.into();
+        assert_eq!(from_seeds, BudgetCategory::Seeds);
+        let from_other: BudgetCategory = ExpenseCategory::Other("Pesticidas".into()).into();
+        assert_eq!(from_other, BudgetCategory::Other("Pesticidas".into()));
     }
 }

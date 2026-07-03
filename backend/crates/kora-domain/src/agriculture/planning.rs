@@ -65,4 +65,6 @@ impl Schedule {
     pub fn activities(&self) -> &Vec<PlannedActivity> { &self.activities }
     pub fn anchor_date(&self) -> i64 { self.anchor_date }
     pub fn cycle_id(&self) -> &CycleId { &self.cycle_id }
+    pub fn anchor(&self) -> &ScheduleAnchor { &self.anchor }
+    pub fn id(&self) -> &ScheduleId { &self.id }
 }

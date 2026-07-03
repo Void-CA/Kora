@@ -1,7 +1,7 @@
 use rust_decimal::Decimal;
 use uuid::Uuid;
 
-use kora_kernel::ids::AreaId;
+use kora_kernel::ids::{AreaId, CycleId};
 use kora_kernel::money::Money;
 
 use super::error::SoilError;
@@ -24,6 +24,7 @@ pub struct SoilAnalysis {
     quality: QualityLevel,
     metrics: Vec<SoilMetric>,
     cost: Money,
+    links: Vec<SoilAnalysisLink>,
 }
 
 impl SoilAnalysis {
@@ -43,6 +44,7 @@ impl SoilAnalysis {
             quality,
             metrics: Vec::new(),
             cost,
+            links: Vec::new(),
         })
     }
 
@@ -99,6 +101,18 @@ impl SoilAnalysis {
 
     pub fn value_of(&self, kind: SoilMetricKind) -> Option<Decimal> {
         self.metric(kind).map(|m| m.value())
+    }
+
+    pub fn link_to_cycle(&mut self, cycle_id: CycleId, kind: LinkKind) {
+        self.links.push(SoilAnalysisLink {
+            analysis_id: self.id.clone(),
+            cycle_id,
+            kind,
+        });
+    }
+
+    pub fn links(&self) -> &[SoilAnalysisLink] {
+        &self.links
     }
 }
 
@@ -189,5 +203,23 @@ mod tests {
     fn empty_area_id_rejected() {
         let result = SoilAnalysis::new(AreaId(String::new()), 1000, QualityLevel::Basic, cost());
         assert!(matches!(result, Err(SoilError::EmptyAreaId)));
+    }
+
+    #[test]
+    fn link_to_cycle_adds_link() {
+        let mut a = SoilAnalysis::new(AreaId::new(), 1000, QualityLevel::Basic, cost()).unwrap();
+        a.add_metric(ph("6.5")).unwrap();
+        a.link_to_cycle(CycleId::new(), LinkKind::Previo);
+        assert_eq!(a.links().len(), 1);
+        assert_eq!(a.links()[0].kind, LinkKind::Previo);
+    }
+
+    #[test]
+    fn multiple_links_supported() {
+        let mut a = SoilAnalysis::new(AreaId::new(), 1000, QualityLevel::Basic, cost()).unwrap();
+        a.add_metric(ph("6.5")).unwrap();
+        a.link_to_cycle(CycleId::new(), LinkKind::Previo);
+        a.link_to_cycle(CycleId::new(), LinkKind::Posterior);
+        assert_eq!(a.links().len(), 2);
     }
 }
