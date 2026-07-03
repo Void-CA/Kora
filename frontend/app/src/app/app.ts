@@ -1,10 +1,10 @@
-import { Component, signal } from '@angular/core';
-import { OperationDashboard } from './features/operation-dashboard/operation-dashboard';
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  imports: [OperationDashboard],
-  template: `<app-operation-dashboard />`,
+  imports: [RouterOutlet],
+  template: `<router-outlet />`,
   styles: `
     :host {
       display: block;

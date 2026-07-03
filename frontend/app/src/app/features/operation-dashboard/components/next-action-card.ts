@@ -1,4 +1,5 @@
-import { Component, input } from '@angular/core';
+import { Component, input, computed } from '@angular/core';
+import { ContextChips } from '../../../shared/context-chips';
 
 export interface NextAction {
   title: string;
@@ -11,13 +12,12 @@ export interface NextAction {
 
 @Component({
   selector: 'app-next-action-card',
+  imports: [ContextChips],
   template: `
     <article class="action-card" [class.action-card--high]="action().priority === 'high'">
       <div class="action-card__body">
         <h3 class="action-card__title">{{ action().title }}</h3>
-        <p class="action-card__context">
-          {{ action().field }} · {{ action().lot }} · {{ action().crop }}
-        </p>
+        <app-context-chips [items]="contextItems()" />
         <p class="action-card__when">{{ action().when }}</p>
       </div>
       <div class="action-card__actions">
@@ -54,19 +54,13 @@ export interface NextAction {
       font-size: 1rem;
       font-weight: 600;
       color: var(--ink);
-      margin: 0 0 var(--space-1) 0;
-    }
-
-    .action-card__context {
-      font-size: 0.875rem;
-      color: var(--ink-muted);
-      margin: 0 0 var(--space-1) 0;
+      margin: 0 0 var(--space-2) 0;
     }
 
     .action-card__when {
       font-size: 0.8125rem;
       color: var(--ink-subtle);
-      margin: 0;
+      margin: var(--space-2) 0 0 0;
     }
 
     .action-card__actions {
@@ -106,4 +100,13 @@ export interface NextAction {
 })
 export class NextActionCard {
   readonly action = input.required<NextAction>();
+
+  readonly contextItems = computed(() => {
+    const a = this.action();
+    return [
+      { label: a.field },
+      { label: a.lot },
+      { label: a.crop },
+    ];
+  });
 }
