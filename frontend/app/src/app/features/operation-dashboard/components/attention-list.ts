@@ -11,7 +11,7 @@ import { AttentionItem } from '../../../api/kora-api';
         <li class="list__item" [attr.data-kind]="item.kind">
           <span class="list__dot"></span>
           <div class="list__body">
-            <a class="list__text" [routerLink]="['/campos', fieldId(item)]">{{ item.text }}</a>
+            <a class="list__text" [routerLink]="['/lotes', fieldId(item)]">{{ item.text }}</a>
             <p class="list__metric">{{ item.metric }}</p>
           </div>
         </li>
