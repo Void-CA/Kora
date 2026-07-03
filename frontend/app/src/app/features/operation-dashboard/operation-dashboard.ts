@@ -1,14 +1,8 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { StatusSummary, StatusCounts } from './components/status-summary';
 import { NextActionCard, NextAction } from './components/next-action-card';
 import { AttentionList, AttentionItem } from './components/attention-list';
-
-interface OperationToday {
-  status: StatusCounts;
-  nextAction: NextAction;
-  attention: AttentionItem[];
-  contextNote: string;
-}
+import { getOperationToday, OperationToday as ApiOperationToday } from '../../api/kora-api';
 
 @Component({
   selector: 'app-operation-dashboard',
@@ -17,25 +11,12 @@ interface OperationToday {
   styleUrl: './operation-dashboard.scss',
 })
 export class OperationDashboard {
-  // Mock de datos: la fuente real vivirá en un servicio HTTP en Fase 3.
-  // No creamos un servicio todavía — señal de que el conocimiento aún no lo exige.
-  readonly state = signal<OperationToday>({
-    status: { ok: 18, attention: 4, critical: 1 },
-    nextAction: {
-      title: 'Aplicar fertilizante',
-      field: 'Campo Norte',
-      lot: 'Lote A',
-      crop: 'Maíz',
-      when: 'Hoy 09:00',
-      priority: 'high',
-    },
-    attention: [
-      { kind: 'delay', text: '2 lotes con retraso en cronograma' },
-      { kind: 'budget', text: '1 gasto fuera de presupuesto' },
-      { kind: 'weather', text: 'Lluvia prevista en 8h — revisar fumigación' },
-    ],
-    contextNote: 'Operación · hoy',
-  });
+  readonly state = signal<ApiOperationToday | null>(null);
+  readonly error = signal<string | null>(null);
 
-  readonly today = computed(() => this.state().contextNote);
+  constructor() {
+    getOperationToday()
+      .then(data => this.state.set(data))
+      .catch(err => this.error.set(String(err)));
+  }
 }

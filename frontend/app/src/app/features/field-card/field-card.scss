@@ -31,6 +31,22 @@
   margin: var(--space-1) 0 0 0;
 }
 
+.field__yield {
+  font-size: 0.875rem;
+  color: var(--ink);
+  margin: var(--space-3) 0 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.field__yield-delta {
+  margin-left: var(--space-2);
+  color: var(--ink-muted);
+}
+
+.field__yield-delta--positive {
+  color: var(--state-ok);
+}
+
 .field__top {
   display: grid;
   grid-template-columns: 240px 1fr;
