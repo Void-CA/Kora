@@ -1,251 +1,92 @@
-# Decisiones de Diseño - Kora v2.0
+# Decisiones de Diseño — Kora
 
-> Documento vivo de arquitectura. Registra las decisiones técnicas tomadas, su contexto y consideraciones para el futuro.
+> Documento vivo de arquitectura. Refleja el estado actual del código, no aspiraciones.
 
-## Índice
-1. [Money Type](#1-money-type)
-2. [Budget Aggregate](#2-budget-aggregate)
-3. [CropCycle & ActivityRecord](#3-cropcycle--activityrecord)
-4. [Schedule](#4-schedule)
-5. [Filosofía Transversal](#5-filosofía-transversal-imperfection-controlled)
-6. [Consideraciones para el Futuro](#6-consideraciones-para-el-futuro)
+## Estructura actual (post-simplificación)
 
----
+```
+backend/src/
+  shared_kernel/    # Tipos transversales (Money, Period, Polygon, IDs)
+  agriculture/      # Contexto agrícola (CropCycle, Schedule, Drift)
+  finance/          # Contexto financiero (Budget, Expense)
+  ports/            # Traits de repositorio y providers (interfaces puras)
+  adapters/         # Implementaciones concretas (in-memory, bridges)
+  analyze_variance.rs   # Use case único "Plan vs Realidad"
+  main.rs           # Entry point (pendiente de endpoints)
+```
 
-## 1. Money Type
+Principio rector: las abstracciones aparecen **como consecuencia del conocimiento adquirido**, no como apuesta sobre el futuro. No hay capas `domain/application/infrastructure` anidadas porque no había suficiente código real que las justificara.
 
-### ¿Qué hace?
-- Representa un valor monetario en el sistema.
-- Permite operaciones matemáticas (`add`, `subtract`) y conversión entre monedas (`convert_to`).
-- Es usado por `Budget`, `Expense` y cualquier entidad financiera.
+## Lo implementado ✅
 
-### Decisiones Tomadas
-| Decision | Elección | Alternativas Rechazadas | Razón |
-|----------|-----------|----------------------|--------|
-| **Almacenamiento** | `rust_decimal::Decimal` | `f64` (rechazado: errores de redondeo) | El dinero requiere precisión decimal exacta. `f64` es inaceptable para contabilidad. |
-| **Monedas** | `enum Currency { USD, NIO }` | `String` (rechazado: typos, validación débil) | Con 2 monedas fijas (USD/NIO), un enum da type-safety en compile-time. |
-| **Conversión** | `trait ExchangeRateProvider` | Función `convert(monto, de, a)` (rechazado: acopla fuente de tasas) | Desacopla la lógica de negocio de dónde vienen las tasas. |
+| Componente | Archivo | Tests |
+|---|---|---|
+| Money, Currency, ExchangeRateProvider | `shared_kernel/money.rs` | 5 |
+| Period (inmutable, con overlaps/contains) | `shared_kernel/period.rs` | 8 |
+| Polygon geoespacial | `shared_kernel/polygon.rs` | — |
+| AreaMeasurement (ha/m²/acres) | `shared_kernel/area_unit.rs` | 5 |
+| IDs compartidos (CycleId, CropId, AreaId) | `shared_kernel/ids.rs` | — |
+| CropCycle + register_activity | `agriculture/cycle.rs` | 3 |
+| Activity/ActivityRecord + IntegrityStatus | `agriculture/activity.rs` | 3 |
+| Schedule + PlannedActivity | `agriculture/planning.rs` | 3 |
+| Farm + validación de jerarquía | `agriculture/farm.rs` | 2 |
+| Area + invariante ProductiveAreaExceedsBounds | `agriculture/area.rs` | 2 |
+| Crop | `agriculture/crop.rs` | — |
+| CropPlanningService (colisión espacio-temporal) | `agriculture/planning_service.rs` | 4 |
+| Drift: VarianceService (timing) + EconomicVarianceService (costos) | `agriculture/drift.rs` | 8 |
+| Budget + plan_cost/record_actual_cost + multi-moneda | `finance/budget.rs` | 4 |
+| Expense | `finance/expense.rs` | — |
+| FinanceError + From<RateError> | `finance/error.rs` | 2 |
+| AnalyzeVariance use case (timing + optional economic) | `analyze_variance.rs` | 2 |
+| FinanceEconomicProvider (puente agriculture↔finance) | `adapters/finance_economic_provider.rs` | 3 |
+| InMemory repositories (test) | `adapters/in_memory_repositories.rs` | — |
 
-### Lo que HACE
-- ✅ Operaciones aritméticas con `Decimal`.
-- ✅ Conversión usando un `ExchangeRateProvider` (manual o API).
-- ✅ Protección contra operaciones entre monedas distintas (`RateError::CurrencyMismatch`).
+**Total: 51 tests, 0 warnings.**
 
-### Lo que NO HACE (y por qué)
-- ❌ **No almacena tasas de cambio internamente**: Eso es responsabilidad de quien implemente `ExchangeRateProvider`.
-- ❌ **No hace llamadas HTTP**: La implementación de API (Banco Central) vive fuera del kernel, en infraestructura.
-- ❌ **No soporta más de 2 monedas por ahora**: El `enum` es cerrado. Para escalar, cambiar a `String` + validación.
+## Decisiones activas
 
-### Consideraciones para el Futuro
-1. **`Decimal` vs `BigDecimal`**: `rust-decimal` es suficiente para 2-3 decimales. Si necesitás precisión arbitraria (crypto?), evaluar `bigdecimal`.
-2. **Monedas dinámicas**: Si Kora se expande a otros países, cambiar `enum` por `struct Currency { code: String, symbol: String }` y tabla de monedas soportadas.
-3. **Historial de tasas**: `ExchangeRateProvider` debería poder consultar tasas a una fecha específica para auditoría.
+### 1. Money type
+- `rust_decimal::Decimal` (no f64) para precisión contable.
+- `Currency` enum cerrado (USD/NIO). Si se expande, migrar a `struct Currency { code: String }`.
+- `ExchangeRateProvider` trait desacopla fuente de datos del dominio.
+- `add`/`subtract` rechazan monedas distintas en compile-time.
 
----
+### 2. Imperfección controlada
+Kora NO bloquea registros "incorrectos". Los marca y analiza después.
 
-## 2. Budget Aggregate
+- `CropCycle.register_activity()` acepta actividades fuera de periodo → `IntegrityStatus::OutsidePeriod`.
+- `Budget.register_expense()` no rechaza gastos que superen el baseline.
 
-### ¿Qué hace?
-- Es el **Aggregate Root** financiero de un ciclo (doc v2: "contenedor financiero").
-- Mantiene una "Foto Inicial" (`baseline`) y una "Foto Actual" (`current_expenses`).
-- Su `period` puede ser más amplio que el ciclo biológico (captura gastos pre-operativos).
+### 3. Análisis de varianza (Drift)
+Dos servicios en un mismo archivo (`agriculture/drift.rs`):
 
-### Decisiones Tomadas
-| Decision | Elección | Alternativas Rechazadas | Razón |
-|----------|-----------|----------------------|--------|
-| **Referencia a Ciclo** | `cycle_id: CycleId` (no importa dominio agriculture) | `crop_cycle: CropCycle` (rechazado: acopla contextos) | Mantiene aislación de Bounded Context. |
-| **Tasas de cambio** | `rate_provider: Box<dyn ExchangeRateProvider>` | `HashMap<(Currency, Currency), Decimal>` (rechazado: no permite API) | Permite inyectar manual o API según el entorno. |
-| **Comportamiento ante exceso** | **NO bloquea** gastos que superen el presupuesto | `if current > baseline { return Err(...) }` (rechazado: viola filosofía) | "La vida real no se detiene". Se registra y se analiza después. |
+- **VarianceService**: compara Schedule (plan) vs CropCycle (ejecución). Produce VarianceReport con matched/unplanned/missing y confidence scoring.
+- **EconomicVarianceService**: enriquece el reporte con costos planificados vs reales, usando `EconomicDataProvider` trait (implementado por finance vía `FinanceEconomicProvider`).
 
-### Lo que HACE
-- ✅ `register_expense(amount)`: Actualiza `current_expenses` sin bloquear.
-- ✅ `get_remaining()`: Calcula `baseline - current` (cuánto queda).
-- ✅ `get_variance()`: Calcula `current - baseline` (desviación: positivo = sobre gasto).
+### 4. Puente entre bounded contexts
+`FinanceEconomicProvider` implementa `EconomicDataProvider` (definido en `ports/`). Agriculture consulta costos sin importar el módulo finance.
 
-### Lo que NO HACE
-- ❌ **No persiste aún**: No hay repositorios implementados (próxima etapa).
-- ❌ **No genera alertas**: La lógica de "Excedente" va en la capa de análisis, no en el dominio.
-- ❌ **No valida timestamps**: No verifica si un gasto pertenece al `period` del presupuesto (filosofía: aceptar lo que pasó).
+## Lo que NO está (y por qué)
 
-### Consideraciones para el Futuro
-1. **Repositorio**: Crear `BudgetRepository` con trait `fn save(&self, budget: &Budget)` y `fn find_by_cycle(&self, cycle_id: &CycleId)`.
-2. **Alertas**: Crear un `BudgetService` que al llamar `register_expense` verifique si `get_variance() > 0` y emita un `Event::BudgetExceeded`.
-3. **Multi-moneda en Budget**: ¿El `baseline` y los gastos pueden ser en monedas distintas? Si sí, `current_expenses` debe ser un `Vec<(Money, ExpenseId)>` y todas las operaciones usan `convert_to`.
+| Feature | Estado | Motivo |
+|---|---|---|
+| Persistencia PostGIS | No implementado | El dominio no tiene repositorios reales; los InMemory son suficientes para validar la lógica |
+| HTTP API | No implementado | Sin endpoints todavía; el dominio es un crate puro |
+| Frontend | No implementado | `frontend/` existe como carpeta vacía (previsión, no deuda) |
+| Labor context (Worker, WorkRecord) | Eliminado en simplificación | No tenía casos de uso; se reintroduce cuando una feature lo demande |
+| Analysis/Suelo (MetricKind, AnalysisMetric) | Eliminado en simplificación | Idem; se reintroduce con el UC "Registrar Análisis de Suelo" |
+| Eventsourcing / Schedule snapshots | No implementado | Se evalúa cuando haya más de un ciclo en la misma área |
 
----
+## Roadmap tentativo
 
-## 3. CropCycle & ActivityRecord
-
-### ¿Qué hace?
-- `CropCycle` es el Aggregate Root del contexto agriculture.
-- `register_activity()` permite registrar actividades que **sucedieron en el campo**, aceptando que la realidad es imperfecta.
-
-### Decisiones Tomadas
-| Decision | Elección | Alternativas Rechazadas | Razón |
-|----------|-----------|----------------------|--------|
-| **Manejo de desviaciones** | `IntegrityStatus` enum (`Valid`, `OutsidePeriod`, `Unplanned`) | `bool is_outside_period` (rechazado: no escala a otros estados) | Un vector de estados es extensible para futuros chequeos. |
-| **Estructura de registro** | `ActivityRecord { activity, integrity }` | Modificar `Activity` directamente (rechazado: mezcla datos con metadatos) | Separa el "qué" (Activity) del "cómo se registró" (IntegrityStatus). |
-| **Bloqueo por periodo** | **NO bloquea** si la actividad está fuera del periodo | `return Err(ActivityOutsideCyclePeriod)` (rechazado: violaba doc v2) | "El Plan no es la verdad; es el Marco de Referencia". |
-
-### Lo que HACE
-- ✅ `register_activity()`: Acepta actividades fuera de periodo, las marca con `IntegrityStatus::OutsidePeriod`.
-- ✅ `close_cycle()`: Impide nuevos registros (único caso de bloqueo legítimo: ciclo cerrado).
-- ✅ `executed_activities`: Ahora es `Vec<ActivityRecord>` para trackear integridad.
-
-### Lo que NO HACE
-- ❌ **No compara con Schedule**: No verifica si la actividad estaba planificada (eso lo hará `VarianceService` en el futuro).
-- ❌ **No persiste**: Al igual que Budget, no hay repositorio aún.
-
-### Consideraciones para el Futuro
-1. **VarianceService**: Motor que compare `Schedule` (planificado) vs `executed_activities` (realidad) para generar el análisis de desviación.
-2. **Nuevos IntegrityStatus**: `Late` (dentro del periodo pero después de la fecha planificada), `Incomplete` (sin insumos registrados).
-3. **Snapshots de Schedule**: La doc menciona "Cada cambio en el plan genera un Snapshot". Implementar `ScheduleVersion` para trazabilidad.
+1. Agregar endpoint HTTP (axum o actix) exponiendo `analyze_variance`
+2. Persistencia real con sqlx + PostGIS (implementar repos en `adapters/`)
+3. UC "Registrar Actividad" con sugerencias del Schedule
+4. UC "Crear Presupuesto" multi-rubro
+5. Dashboard de Drift (timeline + costos)
+6. Análisis de suelo con historial por área
 
 ---
 
-## 4. Schedule
-
-### ¿Qué hace?
-- Es una **Entity** (no Aggregate Root) que define el "deber ser" del ciclo.
-- Usa **Anclas Temporales** (`ScheduleAnchor`) para definir cuándo deben ocurrir las actividades.
-
-### Decisiones Tomadas
-| Decision | Elección | Alternativas Rechazadas | Razón |
-|----------|-----------|----------------------|--------|
-| **Referencia temporal** | `ScheduleAnchor` enum (`CycleStart`, `SowingDate`, `HarvestStart`) | Timestamp fijo (rechazado: no permite flexibilidad agronómica) | Permite al agrónomo decir "Fumigación: Día +15 desde Siembra". |
-| **Actividades planificadas** | `PlannedActivity { category, relative_day, status }` | `Activity` directamente (rechazado: una cosa es el plan, otra la ejecución) | Separa intención (Plan) de realidad (Activity). |
-
-### Lo que HACE
-- ✅ Define actividades relativas a un hito (`relative_day: i32`).
-- ✅ Maneja estados de planificación (`Planned`, `InProgress`, `Completed`, `Skipped`).
-- ✅ Vinculado a un `cycle_id` (pero no importa el dominio agriculture).
-
-### Lo que NO HACE
-- ❌ **No se compara con la realidad**: No tiene lógica para contrastar con `executed_activities`.
-- ❌ **No versiona**: La doc v2 dice "Cada cambio genera un Snapshot", pero `version: u32` está declarado y no se usa aún.
-
-### Consideraciones para el Futuro
-1. **Motor de comparación**: Crear `VarianceService.compare(schedule: &Schedule, activities: &[ActivityRecord]) -> Vec<VarianceReport>`.
-2. **Versionado**: Al modificar el `Schedule`, clonar el actual, incrementar `version`, guardar el anterior en `ScheduleHistory`.
-3. **Recursos estimados**: Las actividades planificadas deberían poder tener `estimated_cost: Money` y `estimated_labor: i32` para comparar con la realidad.
-
----
-
-## 5. Filosofía Transversal: "Imperfection-Controlled"
-
-Esta es la filosofía central de Kora (doc v2):
-
-> "Kora acepta que la agricultura es caótica. Su misión no es obligar al usuario a ser perfecto, sino hacer visible la imperfección para que pueda ser gestionada."
-
-### ¿Cómo se aplica?
-| Componente | Antes (Incorrecto) | Ahora (Correcto) |
-|------------|-------------------|----------------|
-| `CropCycle` | Bloqueaba actividades fuera de periodo | Las acepta, marca con `IntegrityStatus` |
-| `Budget` | (No existía) | Acepta gastos que superen baseline, no bloquea |
-| `Schedule` | (No se tocó) | Se mantiene como referencia, no como ley |
-
-### Mantra de Kora
-> "Registra lo que pasó, compáralo con lo que querías, y aprende de la diferencia."
-
----
-
-## 6. Consideraciones para el Futuro
-
-### 6.1 Persistence (PostGIS)
-- **La doc promete**: PostgreSQL + PostGIS para precisión geométrica.
-- **Estado actual**: No hay nada de persistencia. Todo vive en memoria.
-- **Siguiente paso**: Definir repositorios (`CropCycleRepository`, `BudgetRepository`, `ScheduleRepository`) con traits y migraciones de base de datos.
-
-### 6.2 VarianceService (El "Diferencial" de Kora)
-- **La doc promete**: "El valor diferencial de Kora ocurre al contrastar los datos: Planificado vs. Ejecutado".
-- **Estado actual**: `Schedule` y `CropCycle` viven en contextos distintos.
-- **Siguiente paso**: Implementar `VarianceService` que use `ExchangeRateProvider` para unificar monedas y compare `Schedule` vs `executed_activities` vs `Budget`.
-
-#### HALLAZGO CRÍTICO DEL TEST DE INTEGRACIÓN (tests/integration_test.rs):
-El flujo **Plan → Execute → Analyze** reveló:
-1. ✅ **Lo que SÍ funciona**: 
-   - Creación de `CropCycle`, `Schedule`, `Budget`.
-   - Registro de actividades con `IntegrityStatus` (Valid, OutsidePeriod).
-   - Registro de gastos sin bloqueo (filosofía imperfección controlada).
-   - Cálculo de varianza de presupuesto (`get_variance()`).
-
-2. ❌ **Lo que FALTA (la brecha real)**:
-   - **No hay `VarianceService`**: No podemos comparar `Schedule.activities` (planificado) con `CropCycle.executed_activities` (realidad).
-   - **No hay matching de actividades**: No hay lógica que diga "esta actividad real coincidió con esta planificada".
-   - **No hay cálculo de retraso**: `Schedule` usa `relative_day`, pero no hay forma de comparar con `Activity.timestamp`.
-   - **`IntegrityStatus::Unplanned` no se asigna**: No hay servicio que detecte actividades reales sin planificación.
-
-3. **Lo que necesitamos para completar el "Diferencial"**:
-   ```rust
-   // Estructura propuesta para VarianceService
-   pub struct VarianceReport {
-       on_time: Vec<ActivityRecord>,      // Coinciden con Schedule
-       delayed: Vec<(PlannedActivity, ActivityRecord)>, // Hubo retraso
-       unplanned: Vec<ActivityRecord>,  // No estaban en Schedule
-       budget_variance: Money,          // Presupuesto vs Gastado
-   }
-   
-   // El servicio necesita:
-   // 1. Matchear por category + timestamp vs relative_day (usando anchor_date)
-   // 2. Calcular "días de retraso"
-   // 3. Asignar IntegrityStatus::Unplanned a lo que no matchee
-   // 4. Usar Budget.get_variance() para lo financiero
-   ```
-
-### 6.3 API / UI
-- **La doc promete**: "Inteligencia de Negocio", "Plataforma de Inteligencia Agrícola".
-- **Estado actual**: Solo dominio en Rust. No hay endpoints ni UI.
-- **Siguiente paso**: Definir API REST/GraphQL, conectar con un frontend que muestre mapas interactivos (OLTP) y dashboards de análisis (OLAP).
-
-### 6.4 Testing
-- **Estado actual**: Tests unitarios en cada módulo (`#[cfg(test)]`).
-- **Siguiente paso**: Integrar con `cargo test`, añadir tests de integración (¿cómo interactúan Budget y CropCycle?) y tests E2E cuando haya UI.
-
-### 6.5 Event Sourcing (Opcional)
-- **La doc dice**: "Inmutabilidad Histórica: Los planes no se borran; se versionan".
-- **Consideración**: Evaluar si Kora se beneficia de un Event Store (ej. `ActivityRegistered`, `BudgetExceeded`) para reconstruir el estado y auditar.
-
----
-
-## Resumen de Archivos Clave
-
-| Archivo | Rol | Estado |
-|---------|-----|--------|
-| `shared_kernel/money.rs` | Money type, Currency, ExchangeRateProvider | ✅ Implementado |
-| `shared_kernel/ids.rs` | BudgetId, ExpenseId, CycleId, etc. | ✅ Implementado |
-| `finance/domain/budget.rs` | Budget aggregate | ✅ Implementado |
-| `finance/domain/expense.rs` | Expense entity | ✅ Implementado |
-| `agriculture/domain/cycle.rs` | CropCycle aggregate | ✅ Implementado (con ActivityRecord) |
-| `agriculture/domain/planning.rs` | Schedule entity | ✅ Implementado (básico) |
-| `finance/error.rs` | FinanceError enum | ✅ Implementado |
-| `agriculture/domain/activity.rs` | ActivityRecord, IntegrityStatus | ✅ Implementado |
-
----
-
-## 7. Test de Integración (Flujo End-to-End)
-
-### ¿Qué hizo?
-- Se creó `server/tests/integration_test.rs` para validar el flujo: **Plan → Execute → Analyze**.
-- Usa `CropCycle`, `Schedule`, `Budget` y `ExchangeRateProvider` juntos.
-
-### Hallazgos Críticos (lo que FALTA):
-1. **NO hay `VarianceService`**: No hay forma de comparar `Schedule.activities` (planificado) con `CropCycle.executed_activities` (realidad).
-2. **`IntegrityStatus::Unplanned` no se asigna**: No hay lógica que diga "esta actividad real no estaba en el cronograma".
-3. **No hay cálculo de retraso**: `Schedule` usa `relative_day`, pero no hay forma de comparar con `Activity.timestamp`.
-4. **No hay matching de actividades**: No se puede decir "esta actividad real corresponde a esta planificada".
-
-### Lo que SÍ funciona:
-- ✅ Creación de ciclos, cronogramas y presupuestos.
-- ✅ Registro de actividades con `IntegrityStatus`.
-- ✅ Registro de gastos sin bloqueo (filosofía imperfección controlada).
-- ✅ Cálculo de varianza de presupuesto (`get_variance()`).
-
-### Siguiente paso recomendado:
-Implementar **`VarianceService`** que:
-1. Tome `Schedule` + `Vec<ActivityRecord>`.
-2. Matchee por `category` y `timestamp` vs `relative_day` (usando `anchor_date`).
-3. Produzca `VarianceReport { on_time, delayed, unplanned }`.
-
----
-
-*Documento generado el 2026-05-01 tras completar ciclos SDD para CropCycle y Budget.*
+*Última actualización: post-simplificación 2026-07-02*
+*De 149 warnings / 4 contextos inflados / 22 tests → 0 warnings / 2 bounded contexts planos / 51 tests*
