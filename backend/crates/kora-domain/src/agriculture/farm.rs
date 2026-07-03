@@ -24,6 +24,10 @@ impl Farm {
     pub fn id(&self) -> &FarmId {
         &self.id
     }
+
+    pub fn areas(&self) -> &[Area] {
+        &self.areas
+    }
 }
 
 #[cfg(test)]

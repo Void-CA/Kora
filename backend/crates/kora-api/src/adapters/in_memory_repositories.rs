@@ -24,6 +24,9 @@ impl CropCycleRepository for InMemoryCropCycleRepository {
     fn save(&mut self, cycle: CropCycle) {
         self.cycles.insert(cycle.id().0.clone(), cycle);
     }
+    fn all(&self) -> Vec<CropCycle> {
+        self.cycles.values().cloned().collect()
+    }
 }
 
 pub struct InMemoryScheduleRepository {
@@ -43,6 +46,9 @@ impl ScheduleRepository for InMemoryScheduleRepository {
     fn save(&mut self, schedule: Schedule) {
         self.schedules.insert(schedule.cycle_id().0.clone(), schedule);
     }
+    fn all(&self) -> Vec<Schedule> {
+        self.schedules.values().cloned().collect()
+    }
 }
 
 pub struct InMemoryBudgetRepository {
@@ -61,5 +67,8 @@ impl BudgetRepository for InMemoryBudgetRepository {
     }
     fn save(&mut self, budget: Budget) {
         self.budgets.insert(budget.id().0.clone(), budget);
+    }
+    fn all(&self) -> Vec<Budget> {
+        self.budgets.values().cloned().collect()
     }
 }

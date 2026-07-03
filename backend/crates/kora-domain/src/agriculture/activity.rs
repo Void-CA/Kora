@@ -71,6 +71,10 @@ impl Activity {
         self.outcomes.push(outcome);
     }
 
+    pub fn set_notes(&mut self, notes: String) {
+        self.notes = Some(notes);
+    }
+
     pub fn category(&self) -> &ActivityCategory {
         &self.category
     }

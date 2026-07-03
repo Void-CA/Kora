@@ -51,6 +51,14 @@ impl Area {
     pub fn id(&self) -> &AreaId {
         &self.id
     }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn measurement(&self) -> &AreaMeasurement {
+        &self.measurement
+    }
 }
 
 #[cfg(test)]

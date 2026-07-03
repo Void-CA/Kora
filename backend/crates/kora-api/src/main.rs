@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 
-mod analyze_variance;
-mod api;
-mod adapters;
+use kora_api::api;
 
 #[tokio::main]
 async fn main() {

@@ -1,5 +1,8 @@
-use axum::Json;
+use std::sync::Arc;
+use axum::{extract::State, Json};
 use serde::Serialize;
+
+use crate::state::AppState;
 
 #[derive(Serialize)]
 pub struct StatusCounts {
@@ -20,7 +23,6 @@ pub enum Priority {
 pub struct NextAction {
     pub title: String,
     pub field: String,
-    pub lot: String,
     pub crop: String,
     pub when: String,
     pub priority: Priority,
@@ -33,7 +35,6 @@ pub struct NextAction {
 pub enum AttentionKind {
     Delay,
     Budget,
-    Weather,
     Info,
 }
 
@@ -52,36 +53,94 @@ pub struct OperationToday {
     pub attention: Vec<AttentionItem>,
 }
 
-pub async fn today() -> Json<OperationToday> {
+pub async fn today(State(state): State<Arc<AppState>>) -> Json<OperationToday> {
+    let cycles = state.list_cycles();
+    let total = cycles.len() as u32;
+
+    let next_action = build_next_action(&state);
+    let (status, attention) = build_status_and_attention(&state);
+
     Json(OperationToday {
-        context_note: "Operación · hoy".to_string(),
-        status: StatusCounts { ok: 18, attention: 4, critical: 1 },
-        next_action: NextAction {
-            title: "Fertilización nitrogenada".to_string(),
-            field: "Campo Norte".to_string(),
-            lot: "Lote A".to_string(),
-            crop: "Maíz".to_string(),
-            when: "Hoy 09:00 · ventana 24h".to_string(),
-            priority: Priority::High,
-            reason: "NDVI 0.62 en Lote A, 18% por debajo del óptimo para la fase".to_string(),
-            consequence: "Si no se aplica antes de la lluvia del viernes, se pierde la ventana de asimilación".to_string(),
-        },
-        attention: vec![
-            AttentionItem {
-                kind: AttentionKind::Budget,
-                text: "Presupuesto Campo Norte sobre 100%".to_string(),
-                metric: "112% usado · $120 sobre".to_string(),
-            },
-            AttentionItem {
-                kind: AttentionKind::Delay,
-                text: "2 lotes atrasados en cronograma".to_string(),
-                metric: "Lote B −3 días · Lote C −1 día".to_string(),
-            },
-            AttentionItem {
-                kind: AttentionKind::Weather,
-                text: "Lluvia prevista en 8h".to_string(),
-                metric: "32mm acumulados · revisar fumigación".to_string(),
-            },
-        ],
+        context_note: format!("Operación · {total} ciclo(s) activos"),
+        status,
+        next_action,
+        attention,
     })
+}
+
+fn build_next_action(state: &AppState) -> NextAction {
+    let cycles = state.cycle_repo.lock().unwrap().all();
+    let schedules = state.schedule_repo.lock().unwrap().all();
+
+    if let Some(cycle) = cycles.first() {
+        if let Some(schedule) = schedules.iter().find(|s| s.cycle_id() == cycle.id()) {
+            if let Some(planned) = schedule.activities().first() {
+                return NextAction {
+                    title: format!("{:?}", planned.category),
+                    field: cycle.area_id().0.clone(),
+                    crop: "Cultivo".to_string(),
+                    when: format!("Día +{}", planned.relative_day),
+                    priority: Priority::High,
+                    reason: "Actividad planificada en el cronograma del ciclo".to_string(),
+                    consequence: "Registrarla mantiene la trazabilidad de varianza".to_string(),
+                };
+            }
+        }
+    }
+
+    NextAction {
+        title: "Sin acciones pendientes".to_string(),
+        field: "—".to_string(),
+        crop: "—".to_string(),
+        when: "—".to_string(),
+        priority: Priority::Low,
+        reason: "No hay cronogramas activos con actividades".to_string(),
+        consequence: "Crea un ciclo para empezar a planificar".to_string(),
+    }
+}
+
+fn build_status_and_attention(state: &AppState) -> (StatusCounts, Vec<AttentionItem>) {
+    let cycles = state.cycle_repo.lock().unwrap().all();
+    let budgets = state.budget_repo.lock().unwrap().all();
+
+    let mut ok = 0u32;
+    let mut attention = 0u32;
+    let mut critical = 0u32;
+    let mut items = Vec::new();
+
+    for cycle in &cycles {
+        let has_activities = !cycle.executed_activities().is_empty();
+        let budget = budgets.iter().find(|b| b.cycle_id() == cycle.id());
+        let over_budget = budget
+            .and_then(|b| b.get_variance().ok())
+            .map(|v| v.amount.is_sign_positive())
+            .unwrap_or(false);
+
+        match (has_activities, over_budget) {
+            (_, true) => critical += 1,
+            (true, false) => ok += 1,
+            (false, false) => attention += 1,
+        }
+
+        if over_budget {
+            if let Some(b) = budget {
+                if let Ok(v) = b.get_variance() {
+                    items.push(AttentionItem {
+                        kind: AttentionKind::Budget,
+                        text: format!("Sobregiro en ciclo {}", cycle.id().0),
+                        metric: format!("+{} USD", v.amount),
+                    });
+                }
+            }
+        }
+        if !has_activities {
+            items.push(AttentionItem {
+                kind: AttentionKind::Delay,
+                text: format!("Ciclo {} sin actividades", cycle.id().0),
+                metric: "0 actividades".to_string(),
+            });
+        }
+    }
+
+    (StatusCounts { ok, attention, critical }, items)
 }
