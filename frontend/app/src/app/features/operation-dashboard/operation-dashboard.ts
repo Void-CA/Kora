@@ -1,8 +1,8 @@
-import { Component, signal, inject } from '@angular/core';
-import { StatusSummary, StatusCounts } from './components/status-summary';
-import { NextActionCard, NextAction } from './components/next-action-card';
-import { AttentionList, AttentionItem } from './components/attention-list';
-import { getOperationToday, OperationToday as ApiOperationToday } from '../../api/kora-api';
+import { Component, signal } from '@angular/core';
+import { StatusSummary } from './components/status-summary';
+import { NextActionCard } from './components/next-action-card';
+import { AttentionList } from './components/attention-list';
+import { getOperationToday, OperationToday } from '../../api/kora-api';
 
 @Component({
   selector: 'app-operation-dashboard',
@@ -11,7 +11,7 @@ import { getOperationToday, OperationToday as ApiOperationToday } from '../../ap
   styleUrl: './operation-dashboard.scss',
 })
 export class OperationDashboard {
-  readonly state = signal<ApiOperationToday | null>(null);
+  readonly state = signal<OperationToday | null>(null);
   readonly error = signal<string | null>(null);
 
   constructor() {

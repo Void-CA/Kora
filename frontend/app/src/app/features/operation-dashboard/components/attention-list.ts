@@ -1,11 +1,6 @@
 import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-
-export interface AttentionItem {
-  kind: 'delay' | 'budget' | 'weather' | 'info';
-  text: string;
-  metric: string;
-}
+import { AttentionItem } from '../../../api/kora-api';
 
 @Component({
   selector: 'app-attention-list',
@@ -48,7 +43,6 @@ export interface AttentionItem {
 
     .list__item[data-kind='delay']   { border-left-color: var(--state-attention); }
     .list__item[data-kind='budget']  { border-left-color: var(--state-critical); }
-    .list__item[data-kind='weather'] { border-left-color: var(--state-info); }
     .list__item[data-kind='info']    { border-left-color: var(--border-strong); }
 
     .list__dot {
@@ -61,7 +55,6 @@ export interface AttentionItem {
 
     .list__item[data-kind='delay']   .list__dot { background: var(--state-attention); }
     .list__item[data-kind='budget']  .list__dot { background: var(--state-critical); }
-    .list__item[data-kind='weather'] .list__dot { background: var(--state-info); }
     .list__item[data-kind='info']    .list__dot { background: var(--ink-subtle); }
 
     .list__body {
@@ -91,9 +84,6 @@ export interface AttentionItem {
 export class AttentionList {
   readonly items = input.required<AttentionItem[]>();
 
-  // MVP heuristic: el primer item con texto en minúscula + espacios
-  // matching "Campo X" linkea a esa ficha. Cuando haya 2+ items con
-  // campos distintos, agregamos `fieldId` como propiedad del item.
   fieldId(item: AttentionItem): string {
     const m = item.text.match(/Campo\s+(\w+)/i);
     if (m) return `campo-${m[1].toLowerCase()}`;

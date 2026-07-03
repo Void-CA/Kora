@@ -1,5 +1,5 @@
 <header class="dashboard-header">
-  <h1>{{ state()?.contextNote ?? 'Operación' }}</h1>
+  <h1>{{ state()?.context_note ?? 'Operación' }}</h1>
 </header>
 
 @if (state(); as s) {
@@ -10,7 +10,7 @@
 
     <section class="next-action-section">
       <h2 class="section-label">Siguiente acción</h2>
-      <app-next-action-card [action]="s.nextAction" />
+      <app-next-action-card [action]="s.next_action" />
     </section>
 
     <section class="attention-section">

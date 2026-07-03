@@ -1,16 +1,6 @@
 import { Component, input, computed } from '@angular/core';
 import { ContextChips } from '../../../shared/context-chips';
-
-export interface NextAction {
-  title: string;
-  field: string;
-  lot: string;
-  crop: string;
-  when: string;
-  priority: 'high' | 'medium' | 'low';
-  reason: string;
-  consequence: string;
-}
+import { NextAction } from '../../../api/kora-api';
 
 @Component({
   selector: 'app-next-action-card',
@@ -144,7 +134,6 @@ export class NextActionCard {
     const a = this.action();
     return [
       { label: a.field },
-      { label: a.lot },
       { label: a.crop },
     ];
   });

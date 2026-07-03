@@ -4,16 +4,8 @@
       <h1 class="field__name">{{ f.name }}</h1>
       <app-context-chips [items]="contextItems()" />
       <p class="field__sub">
-        {{ f.crop }} en {{ f.growth }} · última actividad {{ f.lastActivity }}
+        {{ f.crop }} en {{ f.growth }} · última actividad {{ f.last_activity }}
       </p>
-      @if (yieldDelta(); as y) {
-        <p class="field__yield">
-          Estimado {{ f.estimatedYieldTPerHa }} t/ha
-          <span class="field__yield-delta" [class.field__yield-delta--positive]="y.sign === '+'">
-            {{ y.text }}
-          </span>
-        </p>
-      }
     </header>
 
     <section class="field__top">

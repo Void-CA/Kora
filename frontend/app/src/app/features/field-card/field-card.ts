@@ -1,8 +1,8 @@
 import { Component, signal, input, computed, effect } from '@angular/core';
 import { ContextChips } from '../../shared/context-chips';
-import { CycleTimeline, CyclePhase } from '../../shared/cycle-timeline';
+import { CycleTimeline } from '../../shared/cycle-timeline';
 import { MiniMap } from '../../shared/mini-map';
-import { StatusPill, HealthStatus } from '../../shared/status-pill';
+import { StatusPill } from '../../shared/status-pill';
 import { getField, Field as ApiField } from '../../api/kora-api';
 
 @Component({
@@ -32,17 +32,8 @@ export class FieldCard {
     if (!f) return [];
     return [
       { label: `${f.hectares} ha` },
-      { label: `${f.lots} lotes` },
       { label: f.crop },
-      { label: `${f.daysToHarvest} días a cosecha` },
+      { label: `${f.days_to_harvest} días a cosecha` },
     ];
-  });
-
-  readonly yieldDelta = computed(() => {
-    const f = this.field();
-    if (!f) return null;
-    const diff = f.estimatedYieldTPerHa - f.historicalYieldTPerHa;
-    const sign = diff >= 0 ? '+' : '';
-    return { text: `${sign}${diff.toFixed(1)} t/ha vs histórico`, sign };
   });
 }

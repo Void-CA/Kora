@@ -5,8 +5,8 @@ export type CyclePhaseStatus = 'done' | 'current' | 'pending';
 export interface CyclePhase {
   name: string;
   status: CyclePhaseStatus;
-  dayInPhase: number | null;
-  expectedDurationDays: number | null;
+  day_in_phase: number | null;
+  expected_duration_days: number | null;
 }
 
 @Component({
@@ -17,9 +17,9 @@ export interface CyclePhase {
         <li class="phase" [attr.data-status]="phase.status">
           <span class="phase__name">
             {{ phase.name }}
-            @if (phase.status === 'current' && phase.dayInPhase !== null && phase.expectedDurationDays !== null) {
+            @if (phase.status === 'current' && phase.day_in_phase !== null && phase.expected_duration_days !== null) {
               <span class="phase__day">
-                · día {{ phase.dayInPhase }} de {{ phase.expectedDurationDays }}
+                · día {{ phase.day_in_phase }} de {{ phase.expected_duration_days }}
               </span>
             }
           </span>
