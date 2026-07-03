@@ -10,9 +10,11 @@ use kora_kernel::ids::CycleId;
 use kora_domain::agriculture::cycle::CropCycle;
 use kora_domain::agriculture::activity::ActivityRecord;
 use kora_domain::agriculture::planning::PlannedActivity;
+use kora_domain::agriculture::ids::PlannedActivityId;
 
 use crate::state::AppState;
 use crate::use_cases::get_profitability::{Profitability, execute as run_profitability};
+use crate::use_cases::register_activity::RegistrationMode;
 
 #[derive(Serialize)]
 pub struct CycleSummary {
@@ -117,5 +119,88 @@ fn planned_to_summary(p: &PlannedActivity) -> PlannedSummary {
         id: p.id.0.clone(),
         category: format!("{:?}", p.category),
         relative_day: p.relative_day,
+    }
+}
+
+#[derive(serde::Deserialize)]
+pub struct RegisterActivityDto {
+    pub cycle_id: String,
+    pub timestamp: i64,
+    pub category: String,
+    pub notes: Option<String>,
+    pub mode: String,
+    pub match_against: Option<String>,
+}
+
+#[derive(serde::Serialize)]
+pub struct RegisterActivityResponse {
+    pub activity_id: String,
+    pub category: String,
+    pub timestamp: i64,
+    pub integrity: Vec<String>,
+    pub suggestions: Vec<crate::use_cases::register_activity::PlannedSuggestion>,
+}
+
+pub async fn register_activity(
+    State(state): State<Arc<AppState>>,
+    Json(body): Json<RegisterActivityDto>,
+) -> Result<Json<RegisterActivityResponse>, (StatusCode, String)> {
+    use crate::use_cases::register_activity::{self as register_activity_uc, RegisterActivityInput};
+    let category = parse_category(&body.category).map_err(|e| (StatusCode::BAD_REQUEST, e))?;
+    let mode = parse_mode(&body.mode, body.match_against.as_deref())
+        .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
+    let input = RegisterActivityInput {
+        cycle_id: CycleId(body.cycle_id),
+        timestamp: body.timestamp,
+        category,
+        notes: body.notes,
+        mode,
+    };
+    let reg = register_activity_uc::execute(&state, input)
+        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, format!("{e:?}")))?;
+    Ok(Json(RegisterActivityResponse {
+        activity_id: reg.record.activity.id().0.clone(),
+        category: format!("{:?}", reg.record.activity.category()),
+        timestamp: reg.record.activity.timestamp(),
+        integrity: reg
+            .record
+            .integrity
+            .iter()
+            .map(|i| match i {
+                kora_domain::agriculture::activity::IntegrityStatus::Valid => "valid".to_string(),
+                kora_domain::agriculture::activity::IntegrityStatus::OutsidePeriod => "outside_period".to_string(),
+                kora_domain::agriculture::activity::IntegrityStatus::Unplanned => "unplanned".to_string(),
+                kora_domain::agriculture::activity::IntegrityStatus::MatchedPlanned(pid) => {
+                    format!("matched_planned:{}", pid.0)
+                }
+            })
+            .collect(),
+        suggestions: reg.suggestions,
+    }))
+}
+
+fn parse_category(s: &str) -> Result<kora_domain::agriculture::activity::ActivityCategory, String> {
+    use kora_domain::agriculture::activity::ActivityCategory;
+    match s {
+        "Sowing" | "sowing" => Ok(ActivityCategory::Sowing),
+        "Maintenance" | "maintenance" => Ok(ActivityCategory::Maintenance),
+        "SanitaryControl" | "sanitary_control" => Ok(ActivityCategory::SanitaryControl),
+        "Harvest" | "harvest" => Ok(ActivityCategory::Harvest),
+        _ => Err(format!("unknown category: {s}")),
+    }
+}
+
+fn parse_mode(
+    s: &str,
+    match_against: Option<&str>,
+) -> Result<RegistrationMode, String> {
+    match s {
+        "suggested" | "Suggested" => Ok(RegistrationMode::Suggested),
+        "emergent" | "Emergent" => Ok(RegistrationMode::Emergent),
+        "confirm_match" | "ConfirmMatch" => {
+            let pid = match_against.ok_or("match_against required for confirm_match")?;
+            Ok(RegistrationMode::ConfirmMatch(PlannedActivityId(pid.to_string())))
+        }
+        _ => Err(format!("unknown mode: {s}")),
     }
 }

@@ -43,6 +43,7 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/cycles/:id", get(cycles::get_one))
         .route("/api/cycles/:id/profitability", get(cycles::profitability))
         .route("/api/cycles/:id/timeline", get(cycles::timeline))
+        .route("/api/cycles/:id/activities", post(cycles::register_activity))
         .route("/api/areas/:id/history", get(areas::history))
         .route("/api/areas/:id/dashboard", get(areas::dashboard))
         .route("/api/soil/area/:area_id", get(soil::list_for_area))

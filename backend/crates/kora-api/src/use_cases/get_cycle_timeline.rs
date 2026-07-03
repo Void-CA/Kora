@@ -138,6 +138,7 @@ fn activity_event(r: &ActivityRecord) -> TimelineEvent {
             IntegrityStatus::Valid => "valid".to_string(),
             IntegrityStatus::OutsidePeriod => "outside_period".to_string(),
             IntegrityStatus::Unplanned => "unplanned".to_string(),
+            IntegrityStatus::MatchedPlanned(pid) => format!("matched_planned:{}", pid.0),
         })
         .collect();
     event(

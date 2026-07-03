@@ -237,6 +237,7 @@ pub mod seed {
                     timestamp: 1_700_500_000,
                     category: ActivityCategory::Sowing,
                     notes: Some("Siembra de maíz híbrido".into()),
+                    mode: register_activity_uc::RegistrationMode::Suggested,
                 },
             );
             let _ = register_activity_uc::execute(
@@ -246,6 +247,7 @@ pub mod seed {
                     timestamp: 1_703_000_000,
                     category: ActivityCategory::Maintenance,
                     notes: Some("Riego por goteo".into()),
+                    mode: register_activity_uc::RegistrationMode::Emergent,
                 },
             );
             let _ = crate::use_cases::incidence::execute(

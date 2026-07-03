@@ -1,4 +1,4 @@
-use crate::agriculture::ids::ActivityId;
+use crate::agriculture::ids::{ActivityId, PlannedActivityId};
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum ActivityCategory {
@@ -8,11 +8,12 @@ pub enum ActivityCategory {
     Harvest,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IntegrityStatus {
     Valid,
     OutsidePeriod,
     Unplanned,
+    MatchedPlanned(PlannedActivityId),
 }
 
 #[derive(Debug, Clone)]
