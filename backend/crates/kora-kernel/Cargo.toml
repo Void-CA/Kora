@@ -1,0 +1,13 @@
+[package]
+name = "kora-kernel"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+thiserror = { workspace = true }
+uuid = { workspace = true }
+geo-types = { workspace = true }
+geo = { workspace = true }
+rust_decimal = { workspace = true }
+rust_decimal_macros = { workspace = true }

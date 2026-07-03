@@ -1,7 +1,7 @@
 use crate::agriculture::ids::{PlannedActivityId, ActivityRecordId};
-use crate::shared_kernel::ids::CycleId;
-use crate::shared_kernel::period::Period;
-use crate::shared_kernel::money::{Money, ExchangeRateProvider};
+use kora_kernel::ids::CycleId;
+use kora_kernel::period::Period;
+use kora_kernel::money::{Money, ExchangeRateProvider};
 use crate::finance::error::FinanceError;
 use crate::finance::ids::BudgetId;
 use std::collections::HashMap;
@@ -87,15 +87,15 @@ mod tests {
     use super::*;
     use std::str::FromStr;
 
-    use crate::shared_kernel::money::Currency;
+    use kora_kernel::money::Currency;
 
     struct MockRate;
     impl ExchangeRateProvider for MockRate {
-        fn get_rate(&self, from: Currency, to: Currency) -> Result<rust_decimal::Decimal, crate::shared_kernel::money::RateError> {
+        fn get_rate(&self, from: Currency, to: Currency) -> Result<rust_decimal::Decimal, kora_kernel::money::RateError> {
             match (from, to) {
                 (Currency::USD, Currency::NIO) => Ok(rust_decimal::Decimal::from(36)),
                 (Currency::NIO, Currency::USD) => Ok(rust_decimal::Decimal::from_str("0.0277").unwrap()),
-                _ => Err(crate::shared_kernel::money::RateError::RateNotAvailable(from, to)),
+                _ => Err(kora_kernel::money::RateError::RateNotAvailable(from, to)),
             }
         }
     }

@@ -3,8 +3,8 @@ use crate::agriculture::crop::Crop;
 use crate::agriculture::cycle::CropCycle;
 use crate::agriculture::error::AgricultureError;
 use crate::agriculture::planning::{Schedule, ScheduleAnchor};
-use crate::shared_kernel::ids::AreaId;
-use crate::shared_kernel::period::Period;
+use kora_kernel::ids::AreaId;
+use kora_kernel::period::Period;
 
 pub struct CropPlanningService;
 
@@ -50,9 +50,9 @@ mod tests {
     use super::*;
     use crate::agriculture::farm::Farm;
     use crate::agriculture::ids::FarmId;
-    use crate::shared_kernel::area_unit::{AreaMeasurement, AreaUnit};
-    use crate::shared_kernel::polygon::Polygon;
-    use crate::shared_kernel::ids::CropId;
+    use kora_kernel::area_unit::{AreaMeasurement, AreaUnit};
+    use kora_kernel::polygon::Polygon;
+    use kora_kernel::ids::CropId;
     use crate::agriculture::area::Area;
     use crate::agriculture::area::AreaClassification;
     use geo_types::polygon;

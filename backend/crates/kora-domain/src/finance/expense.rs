@@ -1,5 +1,5 @@
 use crate::finance::ids::{BudgetId, ExpenseId};
-use crate::shared_kernel::money::Money;
+use kora_kernel::money::Money;
 
 #[derive(Debug, Clone)]
 pub enum ExpenseCategory {

@@ -1,5 +1,5 @@
 use crate::agriculture::ids::FarmId;
-use crate::shared_kernel::ids::AreaId;
+use kora_kernel::ids::AreaId;
 use crate::agriculture::area::Area;
 
 #[derive(Debug)]
@@ -29,8 +29,8 @@ impl Farm {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::shared_kernel::area_unit::{AreaMeasurement, AreaUnit};
-    use crate::shared_kernel::polygon::Polygon;
+    use kora_kernel::area_unit::{AreaMeasurement, AreaUnit};
+    use kora_kernel::polygon::Polygon;
     use geo_types::polygon;
 
     fn dummy_polygon() -> Polygon {

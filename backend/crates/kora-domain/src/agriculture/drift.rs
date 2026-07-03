@@ -3,7 +3,7 @@ use crate::agriculture::activity::{ActivityRecord, ActivityCategory};
 use crate::agriculture::planning::{Schedule, PlannedActivity};
 use crate::agriculture::ids::{PlannedActivityId, ActivityRecordId};
 use crate::agriculture::cycle::CropCycle;
-use crate::shared_kernel::money::{Money, RateError};
+use kora_kernel::money::{Money, RateError};
 use crate::ports::economic_data_provider::EconomicDataProvider;
 
 // ── Scoring ──
@@ -251,9 +251,9 @@ mod tests {
     use super::*;
     use crate::agriculture::activity::{Activity, ActivityCategory, ActivityRecord, IntegrityStatus};
     use crate::agriculture::planning::{ScheduleAnchor, ActivityStatus};
-    use crate::shared_kernel::ids::{CycleId, CropId, AreaId};
-    use crate::shared_kernel::period::Period;
-    use crate::shared_kernel::money::{Currency, Money};
+    use kora_kernel::ids::{CycleId, CropId, AreaId};
+    use kora_kernel::period::Period;
+    use kora_kernel::money::{Currency, Money};
 
     // ── Helpers ──
 
@@ -404,5 +404,45 @@ mod tests {
         let report = EconomicVarianceService::analyze_costs(&[matched], &provider);
         assert_eq!(report.matched.len(), 1);
         assert!(report.matched[0].cost_variance.is_none());
+    }
+
+    // ── Orchestrated flow (timing + economic chained) ──
+
+    fn run_orchestrated(economic_provider: Option<&dyn EconomicDataProvider>) -> (VarianceReport, Option<EconomicVarianceReport>) {
+        let mut schedule = Schedule::new(CycleId::new(), ScheduleAnchor::SowingDate, 1500);
+        schedule.add_planned_activity(PlannedActivity {
+            id: PlannedActivityId::new(),
+            category: ActivityCategory::Sowing,
+            relative_day: 0,
+            status: crate::agriculture::planning::ActivityStatus::Planned,
+        });
+
+        let period = Period::new(1000, 2000).unwrap();
+        let mut cycle = CropCycle::new(CropId::new(), AreaId::new(), period);
+        cycle.register_activity(Activity::new(1500, ActivityCategory::Sowing)).unwrap();
+
+        let config = VarianceConfig { temporal_tolerance_days: 5, enable_confidence_scoring: true };
+        let timing_report = VarianceService::analyze_with_config(&schedule, &cycle, &config);
+        let economic_report = economic_provider.map(|p| EconomicVarianceService::analyze_costs(&timing_report.matched, p));
+        (timing_report, economic_report)
+    }
+
+    #[test]
+    fn orchestrated_timing_only() {
+        let (timing, economic) = run_orchestrated(None);
+        assert_eq!(timing.matched.len(), 1);
+        assert_eq!(timing.matched[0].variance, TimingVariance::OnTime);
+        assert!(economic.is_none());
+    }
+
+    #[test]
+    fn orchestrated_timing_and_economic() {
+        let provider = MockEconomicProvider {
+            planned: std::collections::HashMap::new(),
+            actual: std::collections::HashMap::new(),
+        };
+        let (timing, economic) = run_orchestrated(Some(&provider));
+        assert_eq!(timing.matched.len(), 1);
+        assert!(economic.is_some());
     }
 }

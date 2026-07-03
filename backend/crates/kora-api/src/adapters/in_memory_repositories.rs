@@ -1,11 +1,11 @@
-use crate::agriculture::cycle::CropCycle;
-use crate::agriculture::planning::Schedule;
-use crate::finance::budget::Budget;
-use crate::shared_kernel::ids::CycleId;
-use crate::finance::ids::BudgetId;
-use crate::ports::cycle_repository::CropCycleRepository;
-use crate::ports::schedule_repository::ScheduleRepository;
-use crate::ports::budget_repository::BudgetRepository;
+use kora_domain::agriculture::cycle::CropCycle;
+use kora_domain::agriculture::planning::Schedule;
+use kora_domain::finance::budget::Budget;
+use kora_kernel::ids::CycleId;
+use kora_domain::finance::ids::BudgetId;
+use kora_domain::ports::cycle_repository::CropCycleRepository;
+use kora_domain::ports::schedule_repository::ScheduleRepository;
+use kora_domain::ports::budget_repository::BudgetRepository;
 
 pub struct InMemoryCropCycleRepository {
     cycles: std::collections::HashMap<String, CropCycle>,

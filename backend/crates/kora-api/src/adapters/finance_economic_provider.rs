@@ -1,9 +1,9 @@
-use crate::shared_kernel::money::Money;
+use kora_kernel::money::Money;
 use std::sync::Arc;
-use crate::agriculture::ids::{PlannedActivityId, ActivityRecordId};
-use crate::ports::economic_data_provider::EconomicDataProvider;
-use crate::ports::budget_repository::BudgetRepository;
-use crate::finance::ids::BudgetId;
+use kora_domain::agriculture::ids::{PlannedActivityId, ActivityRecordId};
+use kora_domain::ports::economic_data_provider::EconomicDataProvider;
+use kora_domain::ports::budget_repository::BudgetRepository;
+use kora_domain::finance::ids::BudgetId;
 
 /// Finance-side adapter that implements agriculture's EconomicDataProvider trait.
 /// Bridges bounded contexts without coupling them.
@@ -34,10 +34,10 @@ impl EconomicDataProvider for FinanceEconomicProvider {
 mod tests {
     use super::*;
     use crate::adapters::in_memory_repositories::InMemoryBudgetRepository;
-    use crate::finance::budget::Budget;
-    use crate::shared_kernel::ids::CycleId;
-    use crate::shared_kernel::period::Period;
-    use crate::shared_kernel::money::{Money, Currency, ExchangeRateProvider, RateError};
+    use kora_domain::finance::budget::Budget;
+    use kora_kernel::ids::CycleId;
+    use kora_kernel::period::Period;
+    use kora_kernel::money::{Money, Currency, ExchangeRateProvider, RateError};
     use rust_decimal::Decimal;
     use std::sync::Arc;
 

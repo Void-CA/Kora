@@ -238,23 +238,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0a5c400df2834b80a4c3327b3aad3a4c4cd4de0629063962b03235697506a28"
 
 [[package]]
-name = "domain_mock"
-version = "0.1.0"
-dependencies = [
- "axum",
- "geo",
- "geo-types",
- "rust_decimal",
- "rust_decimal_macros",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tower-http",
- "uuid",
-]
-
-[[package]]
 name = "earcut"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -627,6 +610,48 @@ checksum = "2964e92d1d9dc3364cae4d718d93f227e3abb088e747d92e0395bfdedf1c12ca"
 dependencies = [
  "once_cell",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "kora-api"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "geo",
+ "geo-types",
+ "kora-domain",
+ "kora-kernel",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tower-http",
+ "uuid",
+]
+
+[[package]]
+name = "kora-domain"
+version = "0.1.0"
+dependencies = [
+ "geo",
+ "geo-types",
+ "kora-kernel",
+ "rust_decimal",
+ "thiserror",
+ "uuid",
+]
+
+[[package]]
+name = "kora-kernel"
+version = "0.1.0"
+dependencies = [
+ "geo",
+ "geo-types",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "thiserror",
+ "uuid",
 ]
 
 [[package]]

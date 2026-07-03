@@ -1,6 +1,6 @@
-use crate::shared_kernel::polygon::Polygon;
-use crate::shared_kernel::area_unit::AreaMeasurement;
-use crate::shared_kernel::ids::AreaId;
+use kora_kernel::polygon::Polygon;
+use kora_kernel::area_unit::AreaMeasurement;
+use kora_kernel::ids::AreaId;
 use crate::agriculture::error::AgricultureError;
 
 #[derive(Debug)]
@@ -56,8 +56,8 @@ impl Area {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::shared_kernel::polygon::Polygon;
-    use crate::shared_kernel::area_unit::{AreaMeasurement, AreaUnit};
+    use kora_kernel::polygon::Polygon;
+    use kora_kernel::area_unit::{AreaMeasurement, AreaUnit};
     use geo::GeodesicArea;
     use geo_types::polygon;
 

@@ -1,4 +1,4 @@
-use crate::shared_kernel::error::MeasurementError;
+use crate::error::MeasurementError;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum AreaUnit {

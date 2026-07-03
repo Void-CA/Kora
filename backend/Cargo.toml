@@ -1,18 +1,29 @@
-[package]
-name = "domain_mock"
+[workspace]
+resolver = "2"
+members = [
+    "crates/kora-kernel",
+    "crates/kora-domain",
+    "crates/kora-api",
+]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
 
-[dependencies]
+[workspace.dependencies]
 thiserror = "2.0.18"
-uuid = { version = "1.23.1", features = ["v4" ]}
+uuid = { version = "1.23.1", features = ["v4"] }
 geo-types = "0.7.19"
 geo = "0.33.1"
 rust_decimal = "1.35.0"
 rust_decimal_macros = "1.40.0"
-
 axum = "0.7"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tower-http = { version = "0.5", features = ["cors"] }
+
+kora-kernel = { path = "crates/kora-kernel" }
+kora-domain = { path = "crates/kora-domain" }
+kora-api = { path = "crates/kora-api" }

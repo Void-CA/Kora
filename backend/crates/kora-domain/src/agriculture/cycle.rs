@@ -1,7 +1,7 @@
 use crate::agriculture::activity::{Activity, ActivityRecord, IntegrityStatus};
 use crate::agriculture::error::AgricultureError;
-use crate::shared_kernel::period::Period;
-use crate::shared_kernel::ids::{CycleId, CropId, AreaId};
+use kora_kernel::period::Period;
+use kora_kernel::ids::{CycleId, CropId, AreaId};
 
 #[derive(Debug, Clone)]
 pub struct CropCycle {

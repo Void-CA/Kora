@@ -1,6 +1,6 @@
 use geo_types::Polygon as GeoPolygon;
 use geo::{GeodesicArea, Intersects};
-use crate::shared_kernel::error::SpaceError;
+use crate::error::SpaceError;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Polygon {

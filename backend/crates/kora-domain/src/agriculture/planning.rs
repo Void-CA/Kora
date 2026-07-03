@@ -1,4 +1,4 @@
-use crate::shared_kernel::ids::CycleId;
+use kora_kernel::ids::CycleId;
 use crate::agriculture::ids::{ScheduleId, PlannedActivityId};
 use crate::agriculture::activity::ActivityCategory;
 

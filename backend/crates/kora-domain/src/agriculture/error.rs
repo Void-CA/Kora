@@ -1,4 +1,4 @@
-use crate::shared_kernel::ids::{AreaId, CycleId};
+use kora_kernel::ids::{AreaId, CycleId};
 
 #[derive(Debug, PartialEq)]
 pub enum AgricultureError {

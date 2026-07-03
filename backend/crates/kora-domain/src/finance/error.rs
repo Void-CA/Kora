@@ -1,4 +1,4 @@
-use crate::shared_kernel::money::RateError;
+use kora_kernel::money::RateError;
 
 #[derive(Debug, PartialEq)]
 pub enum FinanceError {
@@ -16,8 +16,8 @@ impl From<RateError> for FinanceError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::shared_kernel::money::RateError;
-    use crate::shared_kernel::money::Currency;
+    use kora_kernel::money::RateError;
+    use kora_kernel::money::Currency;
 
     #[test]
     fn from_rate_error_converts_correctly() {

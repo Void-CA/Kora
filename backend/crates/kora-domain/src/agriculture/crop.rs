@@ -1,4 +1,4 @@
-use crate::shared_kernel::ids::CropId;
+use kora_kernel::ids::CropId;
 
 #[derive(Debug)]
 pub struct Crop {

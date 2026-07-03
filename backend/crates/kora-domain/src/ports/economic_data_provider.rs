@@ -1,4 +1,4 @@
-use crate::shared_kernel::money::Money;
+use kora_kernel::money::Money;
 use crate::agriculture::ids::{PlannedActivityId, ActivityRecordId};
 
 /// Provider trait for fetching economic data from finance context.
