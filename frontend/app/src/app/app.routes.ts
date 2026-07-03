@@ -21,7 +21,7 @@ export const routes: Routes = [
       {
         path: 'lotes/:id',
         loadComponent: () =>
-          import('./features/field-card/field-card').then(m => m.FieldCard),
+          import('./features/area-detail/area-detail').then(m => m.AreaDetail),
         title: 'Kora · Lote',
       },
       {
