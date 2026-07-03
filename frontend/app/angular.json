@@ -31,7 +31,9 @@
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "src/tailwind.css",
+              "src/styles.scss",
+              "node_modules/leaflet/dist/leaflet.css"
             ]
           },
           "configurations": {
