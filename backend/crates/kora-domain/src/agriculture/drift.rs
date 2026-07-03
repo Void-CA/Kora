@@ -133,29 +133,30 @@ impl VarianceService {
 
                 for planned in queue.iter().copied() {
                     let expected_ts = schedule.anchor_date() + planned.relative_day as i64;
-                    let diff_days = record.activity.timestamp() - expected_ts;
-                    if best_match.is_none() || diff_days.abs() < best_match.unwrap().2.abs() {
-                        best_match = Some((idx, planned, diff_days));
+                    let diff_seconds = record.activity.timestamp() - expected_ts;
+                    if best_match.is_none() || diff_seconds.abs() < best_match.unwrap().2.abs() {
+                        best_match = Some((idx, planned, diff_seconds));
                     }
                     idx += 1;
                 }
 
-                if let Some((idx, planned, diff_days)) = best_match {
+                if let Some((idx, planned, diff_seconds)) = best_match {
                     queue.remove(idx).unwrap();
 
-                    let variance = if diff_days == 0 {
+                    let variance = if diff_seconds == 0 {
                         TimingVariance::OnTime
-                    } else if diff_days > 0 {
-                        TimingVariance::Late(diff_days)
+                    } else if diff_seconds > 0 {
+                        TimingVariance::Late(diff_seconds)
                     } else {
-                        TimingVariance::Early(diff_days.abs())
+                        TimingVariance::Early(diff_seconds.abs())
                     };
 
-                    let confidence = if diff_days == 0 {
+                    let tolerance_seconds = config.temporal_tolerance_days * 86400;
+                    let confidence = if diff_seconds == 0 {
                         ConfidenceScore::High
-                    } else if diff_days.abs() <= config.temporal_tolerance_days && config.enable_confidence_scoring {
+                    } else if diff_seconds.abs() <= tolerance_seconds && config.enable_confidence_scoring {
                         ConfidenceScore::Medium
-                    } else if diff_days.abs() <= config.temporal_tolerance_days {
+                    } else if diff_seconds.abs() <= tolerance_seconds {
                         ConfidenceScore::High
                     } else if config.enable_confidence_scoring {
                         ConfidenceScore::Low
