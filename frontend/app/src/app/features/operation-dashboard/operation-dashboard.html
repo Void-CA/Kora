@@ -1,0 +1,19 @@
+<header class="dashboard-header">
+  <h1>{{ today() }}</h1>
+</header>
+
+<main class="dashboard-body">
+  <section class="status-row">
+    <app-status-summary [counts]="state().status" />
+  </section>
+
+  <section class="next-action-section">
+    <h2 class="section-label">Siguiente acción</h2>
+    <app-next-action-card [action]="state().nextAction" />
+  </section>
+
+  <section class="attention-section">
+    <h2 class="section-label">Requiere tu atención</h2>
+    <app-attention-list [items]="state().attention" />
+  </section>
+</main>

@@ -1,0 +1,67 @@
+/* Kora — Design Tokens
+ * Los colores son estado, no decoración.
+ * Ver frontend/docs/ui-guidelines.md
+ */
+
+:root {
+  // Estado
+  --state-ok:        #16a34a;
+  --state-attention: #ca8a04;
+  --state-critical:  #dc2626;
+  --state-info:      #2563eb;
+
+  // Superficies
+  --surface:         #ffffff;
+  --surface-muted:   #f5f5f4;
+  --surface-sunken:  #fafaf9;
+
+  // Texto
+  --ink:             #1c1917;
+  --ink-muted:       #57534e;
+  --ink-subtle:      #a8a29e;
+
+  // Bordes
+  --border:          #e7e5e4;
+  --border-strong:   #d6d3d1;
+
+  // Tipografía
+  --font-sans:       ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:       ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  // Espaciado
+  --space-1:         0.25rem;
+  --space-2:         0.5rem;
+  --space-3:         0.75rem;
+  --space-4:         1rem;
+  --space-6:         1.5rem;
+  --space-8:         2rem;
+  --space-12:        3rem;
+
+  // Radios
+  --radius-sm:       4px;
+  --radius:          6px;
+  --radius-lg:       8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--surface-sunken);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
