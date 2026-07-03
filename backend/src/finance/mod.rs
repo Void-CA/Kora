@@ -1,9 +1,8 @@
-// finance/mod.rs
-pub mod domain;
-pub mod application;
-pub mod infrastructure;
+pub mod budget;
+pub mod expense;
 pub mod error;
+pub mod ids;
 
-pub use domain::budget::Budget;
-pub use domain::expense::{Expense, ExpenseCategory};
-pub use error::FinanceError;
+pub use budget::Budget;
+pub use expense::{Expense, ExpenseCategory};
+pub use ids::{BudgetId, ExpenseId};
