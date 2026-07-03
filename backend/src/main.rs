@@ -7,7 +7,9 @@ pub mod agriculture;
 pub mod finance;
 
 mod analyze_variance;
+mod api;
 
-fn main() {
-    println!("Kora — dominio cargado");
+#[tokio::main]
+async fn main() {
+    api::serve().await;
 }
