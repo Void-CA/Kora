@@ -1,7 +1,12 @@
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use kora_domain::ports::cycle_repository::CropCycleRepository;
 use kora_domain::ports::schedule_repository::ScheduleRepository;
 use kora_domain::ports::budget_repository::BudgetRepository;
+use kora_domain::ports::soil_analysis_repository::SoilAnalysisRepository;
+use kora_domain::ports::worker_repository::WorkerRepository;
+use kora_domain::ports::payroll_entry_repository::PayrollEntryRepository;
+use kora_domain::ports::sanitary_incidence_repository::SanitaryIncidenceRepository;
 use kora_domain::agriculture::cycle::CropCycle;
 use kora_domain::agriculture::farm::Farm;
 use kora_kernel::ids::AreaId;
@@ -10,6 +15,10 @@ pub struct AppState {
     pub cycle_repo: Arc<Mutex<Box<dyn CropCycleRepository + Send>>>,
     pub schedule_repo: Arc<Mutex<Box<dyn ScheduleRepository + Send>>>,
     pub budget_repo: Arc<Mutex<Box<dyn BudgetRepository + Send>>>,
+    pub soil_repo: Arc<Mutex<Box<dyn SoilAnalysisRepository + Send>>>,
+    pub worker_repo: Arc<Mutex<Box<dyn WorkerRepository + Send>>>,
+    pub payroll_repo: Arc<Mutex<Box<dyn PayrollEntryRepository + Send>>>,
+    pub incidence_repo: Arc<Mutex<Box<dyn SanitaryIncidenceRepository + Send>>>,
     pub farms: Vec<Farm>,
 }
 
@@ -18,10 +27,18 @@ impl AppState {
         use crate::adapters::in_memory_repositories::{
             InMemoryBudgetRepository, InMemoryCropCycleRepository, InMemoryScheduleRepository,
         };
+        use crate::adapters::soil_in_memory::InMemorySoilAnalysisRepository;
+        use crate::adapters::worker_in_memory::InMemoryWorkerRepository;
+        use crate::adapters::payroll_in_memory::InMemoryPayrollEntryRepository;
+        use crate::adapters::incidence_in_memory::InMemorySanitaryIncidenceRepository;
         let state = Self {
             cycle_repo: Arc::new(Mutex::new(Box::new(InMemoryCropCycleRepository::new()))),
             schedule_repo: Arc::new(Mutex::new(Box::new(InMemoryScheduleRepository::new()))),
             budget_repo: Arc::new(Mutex::new(Box::new(InMemoryBudgetRepository::new()))),
+            soil_repo: Arc::new(Mutex::new(Box::new(InMemorySoilAnalysisRepository::new()))),
+            worker_repo: Arc::new(Mutex::new(Box::new(InMemoryWorkerRepository::new()))),
+            payroll_repo: Arc::new(Mutex::new(Box::new(InMemoryPayrollEntryRepository::new()))),
+            incidence_repo: Arc::new(Mutex::new(Box::new(InMemorySanitaryIncidenceRepository::new()))),
             farms: seed::build_farms(),
         };
         seed::seed_via_use_cases(&state);
@@ -148,6 +165,78 @@ pub mod seed {
                 Money::new(Decimal::from(3000), Currency::USD),
             );
             state.budget_repo.lock().unwrap().save(budget);
+        }
+
+        let _ = crate::use_cases::register_soil_analysis::execute(
+            state,
+            crate::use_cases::register_soil_analysis::RegisterSoilAnalysisInput {
+                area_id: AreaId("area-campo-norte".into()),
+                sampled_at: 1_690_000_000,
+                quality: kora_domain::agriculture::soil::QualityLevel::Complete,
+                cost: Money::new(Decimal::from(150), Currency::USD),
+                metrics: vec![
+                    kora_domain::agriculture::soil::SoilMetric::new(
+                        kora_domain::agriculture::soil::SoilMetricKind::Ph,
+                        Decimal::from_str("6.2").unwrap(),
+                    ).unwrap(),
+                    kora_domain::agriculture::soil::SoilMetric::new(
+                        kora_domain::agriculture::soil::SoilMetricKind::Nitrogen,
+                        Decimal::from_str("2.1").unwrap(),
+                    ).unwrap(),
+                    kora_domain::agriculture::soil::SoilMetric::new(
+                        kora_domain::agriculture::soil::SoilMetricKind::Phosphorus,
+                        Decimal::from_str("28").unwrap(),
+                    ).unwrap(),
+                    kora_domain::agriculture::soil::SoilMetric::new(
+                        kora_domain::agriculture::soil::SoilMetricKind::Potassium,
+                        Decimal::from_str("145").unwrap(),
+                    ).unwrap(),
+                ],
+            },
+        );
+
+        let juan = crate::use_cases::payroll::register_worker(
+            state,
+            crate::use_cases::payroll::RegisterWorkerInput {
+                name: "Juan Pérez".into(),
+                role: Some(kora_domain::finance::payroll::Role::Operario),
+            },
+        ).ok();
+        let _ = crate::use_cases::payroll::register_worker(
+            state,
+            crate::use_cases::payroll::RegisterWorkerInput {
+                name: "Ana López".into(),
+                role: Some(kora_domain::finance::payroll::Role::Supervisor),
+            },
+        );
+
+        if let (Some(juan_worker), Some(c)) = (juan, &ciclo_norte) {
+            let _ = crate::use_cases::payroll::record_payroll(
+                state,
+                crate::use_cases::payroll::RecordPayrollInput {
+                    worker_id: juan_worker.id().clone(),
+                    amount: Money::new(Decimal::from(500), Currency::USD),
+                    paid_at: 1_704_000_000,
+                    cycle_id: Some(c.cycle.id().clone()),
+                    area_id: None,
+                    role_at_payment: None,
+                },
+            );
+        }
+
+        if let Some(c) = &ciclo_norte {
+            let _ = crate::use_cases::incidence::execute(
+                state,
+                crate::use_cases::incidence::RegisterIncidenceInput {
+                    cycle_id: c.cycle.id().clone(),
+                    kind: kora_domain::agriculture::incidence::IncidenceType::Pest,
+                    severity: kora_domain::agriculture::incidence::Severity::High,
+                    description: "Pulgón detectado en hojas inferiores del Lote A".into(),
+                    action_taken: "Aplicación de imidacloprid 0.5 L/ha".into(),
+                    detected_at: 1_708_000_000,
+                    economic_impact: Some(Money::new(Decimal::from(200), Currency::USD)),
+                },
+            );
         }
     }
 }

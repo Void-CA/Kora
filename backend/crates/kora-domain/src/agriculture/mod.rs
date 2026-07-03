@@ -5,8 +5,10 @@ pub mod cycle;
 pub mod error;
 pub mod farm;
 pub mod ids;
+pub mod incidence;
 pub mod planning;
 pub mod planning_service;
+pub mod soil;
 pub mod drift;
 
 pub use error::AgricultureError;
@@ -17,3 +19,5 @@ pub use area::Area;
 pub use crop::Crop;
 pub use planning::{Schedule, ScheduleAnchor, PlannedActivity, ActivityStatus};
 pub use ids::{PlannedActivityId, ActivityRecordId, ScheduleId, ActivityId, FarmId};
+pub use soil::{SoilAnalysis, SoilAnalysisId, SoilAnalysisLink, LinkKind, SoilError, SoilMetric, SoilMetricKind, QualityLevel};
+pub use incidence::{SanitaryIncidence, SanitaryIncidenceId, IncidenceType, Severity, IncidenceError};

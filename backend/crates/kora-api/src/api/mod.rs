@@ -1,4 +1,4 @@
-use axum::{http::HeaderValue, routing::get, Router};
+use axum::{http::HeaderValue, routing::{get, post}, Router};
 use tower_http::cors::{Any, CorsLayer};
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -8,6 +8,9 @@ mod fields;
 mod health;
 mod cycles;
 mod areas;
+mod soil;
+mod payroll;
+mod incidence;
 
 use crate::state::AppState;
 
@@ -38,6 +41,13 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/cycles/:id", get(cycles::get_one))
         .route("/api/cycles/:id/profitability", get(cycles::profitability))
         .route("/api/areas/:id/history", get(areas::history))
+        .route("/api/soil/area/:area_id", get(soil::list_for_area))
+        .route("/api/soil", post(soil::register))
+        .route("/api/payroll/workers", get(payroll::list_workers).post(payroll::register_worker))
+        .route("/api/payroll/cycle/:cycle_id", get(payroll::list_for_cycle))
+        .route("/api/payroll", post(payroll::record_payroll))
+        .route("/api/incidence/cycle/:cycle_id", get(incidence::list_for_cycle))
+        .route("/api/incidence", post(incidence::register))
         .with_state(state)
         .layer(cors)
 }
