@@ -13,6 +13,7 @@ mod payroll;
 mod incidence;
 mod revenue;
 mod planning;
+mod home;
 
 use crate::state::AppState;
 
@@ -36,6 +37,7 @@ fn router(state: Arc<AppState>) -> Router {
 
     Router::new()
         .route("/api/health", get(health::health))
+        .route("/api/home", get(home::home))
         .route("/api/operation/today", get(operation::today))
         .route("/api/fields", get(fields::list))
         .route("/api/fields/:id", get(fields::get_one))

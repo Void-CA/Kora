@@ -10,7 +10,7 @@
     <div class="stat stat--done"><span class="stat__value">{{ vm.today.completed }}</span><span class="stat__label">completadas</span></div>
   </div>
 
-  @if (vm.today.nextAction; as na) {
+  @if (vm.today.next_action; as na) {
     <div class="next-action">
       <div class="next-action__body">
         <span class="next-action__tag">Siguiente</span>
@@ -34,10 +34,10 @@
               <span class="field-card__name">{{ f.name }}</span>
               <span class="field-card__crop">{{ f.crop }}</span>
             </div>
-            <div class="field-card__bar"><div class="field-card__fill" style="width:{{ f.progressPercent }}%"></div></div>
+            <div class="field-card__bar"><div class="field-card__fill" style="width:{{ f.progress_percent }}%"></div></div>
             <div class="field-card__foot">
-              <span>{{ f.daysToHarvest }} días</span>
-              <span>{{ f.nextActivity }}</span>
+              <span>{{ f.days_to_harvest }} días</span>
+              <span>{{ f.next_activity }}</span>
             </div>
           </a>
         }
@@ -46,7 +46,7 @@
 
     <section>
       <h2 class="section-label">Equipo</h2>
-      <p class="team-summary">{{ vm.team.workingToday }} trabajando · {{ vm.team.missingYesterday }} ausente ayer</p>
+      <p class="team-summary">{{ vm.team.working_today }} trabajando · {{ vm.team.missing_yesterday }} ausente ayer</p>
       <div class="card-stack">
         @for (e of vm.team.entries; track e.name) {
           <div class="person-row" [class.person-row--missing]="e.status==='missing'">
@@ -79,7 +79,7 @@
   @if (vm.weather; as w) {
     <div class="weather-note">
       <span>⛅ {{ w.forecast }} · {{ w.temp }} · {{ w.humidity }}</span>
-      @if (w.rainExpected) { <span class="weather-note__rain">Lluvia esperada</span> }
+      @if (w.rain_expected) { <span class="weather-note__rain">Lluvia esperada</span> }
     </div>
   }
 } @else {
