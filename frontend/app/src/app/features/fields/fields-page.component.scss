@@ -1,0 +1,26 @@
+.header { margin-bottom: var(--space-6); }
+.title { font-size: 1.25rem; font-weight: 600; margin: 0; color: var(--ink); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4); }
+.card { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-5); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); border-left: 3px solid transparent; }
+.card--attention { border-left-color: var(--state-attention); }
+.card--critical { border-left-color: var(--state-critical); }
+.card__top { display: flex; justify-content: space-between; align-items: flex-start; }
+.card__name { display: block; font-size: 1rem; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.card__crop { font-size: 0.8125rem; color: var(--ink-muted); }
+.card__ha { font-size: 0.8125rem; color: var(--ink-subtle); }
+.card__bar { height: 4px; background: var(--surface-muted); border-radius: 2px; overflow: hidden; }
+.card__fill { height: 100%; background: var(--state-ok); border-radius: 2px; }
+.card--attention .card__fill { background: var(--state-attention); }
+.card--critical .card__fill { background: var(--state-critical); }
+.card__info { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.card__stat-label { display: block; font-size: 0.6875rem; color: var(--ink-subtle); text-transform: uppercase; letter-spacing: 0.04em; }
+.card__stat-value { font-size: 0.875rem; color: var(--ink); }
+.card__phases { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.phase { display: inline-flex; align-items: center; gap: var(--space-1); padding: 2px 8px; border-radius: 999px; font-size: 0.6875rem; background: var(--surface-muted); color: var(--ink-subtle); }
+.phase--done { background: #f0fdf4; color: #15803d; }
+.phase--current { background: #eff6ff; color: #1d4ed8; }
+.phase__day { color: inherit; opacity: 0.7; }
+.card__actions { display: flex; gap: var(--space-4); padding-top: var(--space-2); border-top: 1px solid var(--border); }
+.link { font-size: 0.8125rem; color: var(--state-info); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.loading { color: var(--ink-subtle); font-size: 0.875rem; }

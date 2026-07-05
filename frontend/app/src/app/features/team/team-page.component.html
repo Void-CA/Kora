@@ -1,0 +1,35 @@
+@if (vm(); as vm) {
+  <header class="header"><h1 class="title">{{ vm.title }}</h1></header>
+  <div class="summary-bar">
+    <span>{{ vm.today.working }} trabajando ahora</span>
+    <span class="sep">·</span>
+    <span>{{ vm.today.absent }} ausente hoy</span>
+    <span class="sep">·</span>
+    <span>{{ vm.today.total }} total</span>
+  </div>
+  <div class="workers">
+    @for (w of vm.workers; track w.id) {
+      <div class="worker" [class.worker--absent]="w.status==='absent'">
+        <div class="worker__head">
+          <span class="dot" [class.dot--ok]="w.status==='working'" [class.dot--attention]="w.status==='absent'" [class.dot--muted]="w.status==='off'"></span>
+          <span class="worker__name">{{ w.name }}</span>
+          <span class="worker__role">{{ w.role }}</span>
+        </div>
+        @if (w.todayActivity) { <p class="worker__activity">{{ w.todayActivity }}</p> }
+        @if (w.lastPayment) { <p class="worker__pay">Último pago: {{ w.lastPayment }}</p> }
+      </div>
+    }
+  </div>
+  @if (vm.recentPayments.length > 0) {
+    <section><h2 class="section-label">Pagos recientes</h2>
+      @for (p of vm.recentPayments; track p.worker + p.date) {
+        <div class="payment-row">
+          <span class="payment__name">{{ p.worker }}</span>
+          <span class="payment__amount">{{ p.amount }}</span>
+          <span class="payment__date">{{ p.date }}</span>
+          <span class="payment__cycle">{{ p.cycle }}</span>
+        </div>
+      }
+    </section>
+  }
+} @else { <p class="loading">Cargando…</p> }

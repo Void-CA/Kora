@@ -1,0 +1,40 @@
+@if (vm(); as vm) {
+  <header class="header"><h1 class="title">Trabajo</h1><span class="date">{{ vm.date }}</span></header>
+
+  <section class="group">
+    <h2 class="group-title">En progreso</h2>
+    @for (a of vm.inProgress; track a.id) {
+      <div class="card card--active">
+        <div class="card__head"><span class="card__title">{{ a.title }}</span><span class="card__status">En progreso</span></div>
+        <p class="card__meta">{{ a.field }} · {{ a.crop }} · {{ a.scheduledTime }}</p>
+        @if (a.responsible) { <p class="card__resp">{{ a.responsible }}</p> }
+        @if (a.notes) { <p class="card__notes">{{ a.notes }}</p> }
+        <div class="card__actions"><button class="btn btn--ghost" disabled>Completar</button></div>
+      </div>
+    }
+  </section>
+
+  <section class="group">
+    <h2 class="group-title">Pendientes</h2>
+    @for (a of vm.pending; track a.id) {
+      <div class="card">
+        <div class="card__head"><span class="card__title">{{ a.title }}</span><span class="card__status">Pendiente</span></div>
+        <p class="card__meta">{{ a.field }} · {{ a.crop }} · {{ a.scheduledTime }}</p>
+        @if (a.responsible) { <p class="card__resp">{{ a.responsible }}</p> }
+        @if (a.notes) { <p class="card__notes">{{ a.notes }}</p> }
+        <div class="card__actions"><button class="btn btn--ghost">Comenzar</button></div>
+      </div>
+    }
+  </section>
+
+  <section class="group">
+    <h2 class="group-title group-title--muted">Completadas hoy</h2>
+    @for (a of vm.completed; track a.id) {
+      <div class="card card--muted">
+        <div class="card__head"><span class="card__title">{{ a.title }}</span><span class="card__status">Completado</span></div>
+        <p class="card__meta">{{ a.field }} · {{ a.crop }} · {{ a.scheduledTime }}</p>
+        @if (a.responsible) { <p class="card__resp">{{ a.responsible }}</p> }
+      </div>
+    }
+  </section>
+} @else { <p class="loading">Cargando…</p> }

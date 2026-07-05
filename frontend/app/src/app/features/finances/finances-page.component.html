@@ -1,0 +1,23 @@
+@if (vm(); as vm) {
+  <header class="header"><h1 class="title">Finanzas</h1></header>
+  <div class="totals">
+    <div class="total"><span class="total__label">Presupuesto total</span><span class="total__value">{{ vm.totalBudget }}</span></div>
+    <div class="total"><span class="total__label">Gastado</span><span class="total__value">{{ vm.totalSpent }}</span></div>
+    <div class="total"><span class="total__label">Ingresos</span><span class="total__value">{{ vm.totalRevenue }}</span></div>
+    <div class="total"><span class="total__label">Ganancia</span><span class="total__value total__value--profit">{{ vm.profit }}</span></div>
+    <div class="total"><span class="total__label">ROI</span><span class="total__value total__value--profit">{{ vm.roi }}</span></div>
+  </div>
+  <section><h2 class="section-label">Ciclos</h2>
+    @for (c of vm.cycles; track c.cycleName) {
+      <div class="cycle-row" [class.cycle-row--attention]="c.status==='attention'">
+        <div class="cycle-row__head"><span class="cycle-row__name">{{ c.cycleName }}</span></div>
+        <div class="cycle-row__grid">
+          <div><span class="cycle-row__label">Presupuesto</span><span class="cycle-row__val">{{ c.budget }}</span></div>
+          <div><span class="cycle-row__label">Gastado</span><span class="cycle-row__val">{{ c.spent }}</span></div>
+          <div><span class="cycle-row__label">Ingresos</span><span class="cycle-row__val">{{ c.revenue }}</span></div>
+          <div><span class="cycle-row__label">Ganancia</span><span class="cycle-row__val">{{ c.profit }}</span></div>
+        </div>
+      </div>
+    }
+  </section>
+} @else { <p class="loading">Cargando…</p> }

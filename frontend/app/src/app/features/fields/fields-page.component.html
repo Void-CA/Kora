@@ -1,0 +1,32 @@
+@if (vm(); as vm) {
+  <header class="header"><h1 class="title">{{ vm.title }}</h1></header>
+  <div class="grid">
+    @for (f of vm.fields; track f.id) {
+      <div class="card" [class.card--critical]="f.health==='critical'" [class.card--attention]="f.health==='attention'">
+        <div class="card__top">
+          <div><span class="card__name">{{ f.name }}</span><span class="card__crop">{{ f.crop }}</span></div>
+          <span class="card__ha">{{ f.hectares }} ha</span>
+        </div>
+        <div class="card__bar"><div class="card__fill" style="width:{{ f.progressPercent }}%"></div></div>
+        <div class="card__info">
+          <div class="card__stat"><span class="card__stat-label">Cosecha</span><span class="card__stat-value">{{ f.daysToHarvest }} días</span></div>
+          <div class="card__stat"><span class="card__stat-label">Última</span><span class="card__stat-value">{{ f.daysSinceLastActivity === 0 ? 'hoy' : 'hace ' + f.daysSinceLastActivity + ' días' }}</span></div>
+          <div class="card__stat"><span class="card__stat-label">Costo</span><span class="card__stat-value">{{ f.costAccumulated }}</span></div>
+          <div class="card__stat"><span class="card__stat-label">Responsable</span><span class="card__stat-value">{{ f.responsible }}</span></div>
+        </div>
+        <div class="card__phases">
+          @for (p of f.phases; track p.name) {
+            <div class="phase" [class.phase--done]="p.status==='done'" [class.phase--current]="p.status==='current'">
+              <span class="phase__name">{{ p.name }}</span>
+              @if (p.status === 'current') { <span class="phase__day">día {{ p.day }}/{{ p.total }}</span> }
+            </div>
+          }
+        </div>
+        <div class="card__actions">
+          <a class="link" [routerLink]="['/fields', f.id]">Ver detalle →</a>
+          <a class="link" [routerLink]="['/history']">Historial →</a>
+        </div>
+      </div>
+    }
+  </div>
+} @else { <p class="loading">Cargando…</p> }
