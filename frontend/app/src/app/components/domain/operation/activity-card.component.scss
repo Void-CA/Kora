@@ -1,0 +1,15 @@
+.card { padding: var(--space-4); background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: var(--space-2); }
+.card--active { border-left: 3px solid var(--state-info); }
+.card__head { display: flex; justify-content: space-between; align-items: center; }
+.card__title { font-size: 0.875rem; font-weight: 500; color: var(--ink); }
+.card__status { font-size: 0.6875rem; font-weight: 500; color: var(--state-info); }
+.status--pending { color: var(--state-attention); }
+.status--active { color: var(--state-info); }
+.status--done { color: var(--state-ok); }
+.card__details { display: flex; gap: var(--space-2); font-size: 0.75rem; color: var(--ink-muted); margin-top: var(--space-1); flex-wrap: wrap; }
+.card__sep { color: var(--ink-faint); }
+.card__resp { font-size: 0.75rem; color: var(--ink-muted); margin: var(--space-1) 0 0; }
+.card__notes { font-size: 0.75rem; color: var(--ink-muted); margin: var(--space-2) 0 0; padding: var(--space-2); background: var(--surface-muted); border-radius: var(--radius-sm); }
+.card__actions { margin-top: var(--space-2); }
+.btn-ghost { padding: var(--space-1) var(--space-3); border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 500; border: 1px solid var(--border); background: transparent; color: var(--ink-muted); cursor: pointer; transition: background var(--ease); }
+.btn-ghost:hover { background: var(--surface-muted); }
