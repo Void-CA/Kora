@@ -4,3 +4,5 @@ pub mod soil;
 pub mod planning;
 pub mod payroll;
 pub mod incidences;
+pub mod cycles;
+pub mod fields;
