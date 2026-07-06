@@ -30,7 +30,7 @@ const BASE = 'http://localhost:8000';
             <p class="feedback__line">Presupuesto de campaña: {{ fb.budget_pct }}% usado</p>
           }
           @if (fb.cost_total) {
-            <p class="feedback__line">Costo acumulado: ${{ fb.cost_total }}</p>
+            <p class="feedback__line">Costo acumulado: {{ '$' + fb.cost_total }}</p>
           }
           @if (fb.alert) {
             <p class="feedback__line feedback__line--alert">{{ fb.alert }}</p>
