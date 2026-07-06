@@ -55,6 +55,10 @@
   color: #fafaf9;
 }
 
+.nav-item--active .nav-label {
+  font-weight: 600;
+}
+
 .nav-icon {
   width: 18px;
   height: 18px;
@@ -70,5 +74,5 @@
   flex: 1;
   padding: var(--space-10) var(--space-12);
   overflow-x: hidden;
-  max-width: 960px;
+  max-width: 1200px;
 }

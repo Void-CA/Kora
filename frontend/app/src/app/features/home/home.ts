@@ -2,10 +2,11 @@ import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HomeService } from '../../core/services/home.service';
 import type { HomeView } from '../../core/view-models';
+import { FieldMap } from '../field-map/field-map';
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink],
+  imports: [RouterLink, FieldMap],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })
