@@ -172,60 +172,36 @@ pub mod seed {
             state.budget_repo.lock().unwrap().save(budget);
         }
 
-        let _ = crate::use_cases::register_soil_analysis::execute(
+        let _ = crate::features::soil::operations::register(
             state,
-            crate::use_cases::register_soil_analysis::RegisterSoilAnalysisInput {
-                area_id: AreaId("area-campo-norte".into()),
-                sampled_at: 1_690_000_000,
-                quality: kora_domain::agriculture::soil::QualityLevel::Complete,
-                cost: Money::new(Decimal::from(150), Currency::USD),
-                metrics: vec![
-                    kora_domain::agriculture::soil::SoilMetric::new(
-                        kora_domain::agriculture::soil::SoilMetricKind::Ph,
-                        Decimal::from_str("6.2").unwrap(),
-                    ).unwrap(),
-                    kora_domain::agriculture::soil::SoilMetric::new(
-                        kora_domain::agriculture::soil::SoilMetricKind::Nitrogen,
-                        Decimal::from_str("2.1").unwrap(),
-                    ).unwrap(),
-                    kora_domain::agriculture::soil::SoilMetric::new(
-                        kora_domain::agriculture::soil::SoilMetricKind::Phosphorus,
-                        Decimal::from_str("28").unwrap(),
-                    ).unwrap(),
-                    kora_domain::agriculture::soil::SoilMetric::new(
-                        kora_domain::agriculture::soil::SoilMetricKind::Potassium,
-                        Decimal::from_str("145").unwrap(),
-                    ).unwrap(),
-                ],
-            },
+            AreaId("area-campo-norte".into()), 1_690_000_000,
+            kora_domain::agriculture::soil::QualityLevel::Complete,
+            Money::new(Decimal::from(150), Currency::USD),
+            vec![
+                kora_domain::agriculture::soil::SoilMetric::new(
+                    kora_domain::agriculture::soil::SoilMetricKind::Ph, Decimal::from_str("6.2").unwrap()).unwrap(),
+                kora_domain::agriculture::soil::SoilMetric::new(
+                    kora_domain::agriculture::soil::SoilMetricKind::Nitrogen, Decimal::from_str("2.1").unwrap()).unwrap(),
+                kora_domain::agriculture::soil::SoilMetric::new(
+                    kora_domain::agriculture::soil::SoilMetricKind::Phosphorus, Decimal::from_str("28").unwrap()).unwrap(),
+                kora_domain::agriculture::soil::SoilMetric::new(
+                    kora_domain::agriculture::soil::SoilMetricKind::Potassium, Decimal::from_str("145").unwrap()).unwrap(),
+            ],
         );
 
-        let juan = crate::use_cases::payroll::register_worker(
-            state,
-            crate::use_cases::payroll::RegisterWorkerInput {
-                name: "Juan Pérez".into(),
-                role: Some(kora_domain::finance::payroll::Role::Operario),
-            },
+        let juan = crate::features::payroll::operations::register_worker(
+            state, "Juan Pérez".into(), Some(kora_domain::finance::payroll::Role::Operario),
         ).ok();
-        let _ = crate::use_cases::payroll::register_worker(
-            state,
-            crate::use_cases::payroll::RegisterWorkerInput {
-                name: "Ana López".into(),
-                role: Some(kora_domain::finance::payroll::Role::Supervisor),
-            },
+        let _ = crate::features::payroll::operations::register_worker(
+            state, "Ana López".into(), Some(kora_domain::finance::payroll::Role::Supervisor),
         );
 
         if let (Some(juan_worker), Some(c)) = (juan, &ciclo_norte) {
-            let _ = crate::use_cases::payroll::record_payroll(
+            let _ = crate::features::payroll::operations::record_payroll(
                 state,
-                crate::use_cases::payroll::RecordPayrollInput {
-                    worker_id: juan_worker.id().clone(),
-                    amount: Money::new(Decimal::from(500), Currency::USD),
-                    paid_at: 1_704_000_000,
-                    cycle_id: Some(c.cycle.id().clone()),
-                    area_id: None,
-                    role_at_payment: None,
-                },
+                juan_worker.id().clone(),
+                Money::new(Decimal::from(500), Currency::USD), 1_704_000_000,
+                Some(c.cycle.id().clone()), None,
             );
         }
 
@@ -263,21 +239,19 @@ pub mod seed {
                     mode: register_activity_uc::RegistrationMode::Emergent,
                 },
             );
-            let _ = crate::use_cases::incidence::execute(
+            let _ = crate::features::incidences::operations::register(
                 state,
-                crate::use_cases::incidence::RegisterIncidenceInput {
-                    cycle_id: c.cycle.id().clone(),
-                    kind: kora_domain::agriculture::incidence::IncidenceType::Pest,
-                    severity: kora_domain::agriculture::incidence::Severity::High,
-                    description: "Pulgón detectado en hojas inferiores del Lote A".into(),
-                    action_taken: "Aplicación de imidacloprid 0.5 L/ha".into(),
-                    detected_at: 1_708_000_000,
-                    economic_impact: Some(Money::new(Decimal::from(200), Currency::USD)),
-                },
+                c.cycle.id().clone(),
+                kora_domain::agriculture::incidence::IncidenceType::Pest,
+                kora_domain::agriculture::incidence::Severity::High,
+                "Pulgón detectado en hojas inferiores del Lote A".into(),
+                "Aplicación de imidacloprid 0.5 L/ha".into(),
+                1_708_000_000,
+                Some(Money::new(Decimal::from(200), Currency::USD)),
             );
-            let _ = crate::use_cases::register_revenue::execute(
+            let _ = crate::features::finance::revenue::register(
                 state,
-                crate::use_cases::register_revenue::RegisterRevenueInput {
+                crate::features::finance::revenue::RegisterRevenueInput {
                     cycle_id: Some(c.cycle.id().clone()),
                     amount: Money::new(Decimal::from(7200), Currency::USD),
                     received_at: 1_718_000_000,

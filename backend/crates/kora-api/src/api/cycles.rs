@@ -13,7 +13,8 @@ use kora_domain::agriculture::planning::PlannedActivity;
 use kora_domain::agriculture::ids::PlannedActivityId;
 
 use crate::state::AppState;
-use crate::use_cases::get_profitability::{Profitability, execute as run_profitability};
+use crate::features::finance::dto::Profitability;
+use crate::features::finance::profitability;
 use crate::use_cases::register_activity::RegistrationMode;
 
 #[derive(Serialize)]
@@ -79,7 +80,7 @@ pub async fn profitability(
     Path(id): Path<String>,
 ) -> Result<Json<Profitability>, StatusCode> {
     let cycle_id = CycleId(id);
-    run_profitability(&state, &cycle_id)
+    profitability::execute(&state, &cycle_id)
         .map(Json)
         .map_err(|_| StatusCode::NOT_FOUND)
 }

@@ -8,11 +8,6 @@ mod fields;
 mod health;
 mod cycles;
 mod areas;
-mod soil;
-mod payroll;
-mod incidence;
-mod revenue;
-mod planning;
 
 use crate::state::AppState;
 
@@ -34,33 +29,50 @@ fn router(state: Arc<AppState>) -> Router {
         .allow_methods(Any)
         .allow_headers(Any);
 
+    use crate::features::{
+        home::handlers as home_h,
+        finance::handlers as finance_h,
+        soil::handlers as soil_h,
+        planning::handlers as plan_h,
+        payroll::handlers as payroll_h,
+        incidences::handlers as inc_h,
+    };
+
     Router::new()
         .route("/api/health", get(health::health))
-        .route("/api/home", get(crate::features::home::handlers::home))
+        .route("/api/home", get(home_h::home))
         .route("/api/operation/today", get(operation::today))
+        // Fields
         .route("/api/fields", get(fields::list))
         .route("/api/fields/:id", get(fields::get_one))
+        // Cycles
         .route("/api/cycles", get(cycles::list))
         .route("/api/cycles/:id", get(cycles::get_one))
-        .route("/api/cycles/:id/profitability", get(cycles::profitability))
         .route("/api/cycles/:id/timeline", get(cycles::timeline))
         .route("/api/cycles/:id/variance", get(cycles::variance))
         .route("/api/cycles/:id/activities", post(cycles::register_activity))
+        .route("/api/cycles/:id/profitability", get(finance_h::profitability_handler))
+        // Areas
         .route("/api/areas/:id/history", get(areas::history))
         .route("/api/areas/:id/dashboard", get(areas::dashboard))
-        .route("/api/soil/area/:area_id", get(soil::list_for_area))
-        .route("/api/soil", post(soil::register))
-        .route("/api/soil/link", post(planning::link_soil))
-        .route("/api/payroll/workers", get(payroll::list_workers).post(payroll::register_worker))
-        .route("/api/payroll/cycle/:cycle_id", get(payroll::list_for_cycle))
-        .route("/api/payroll", post(payroll::record_payroll))
-        .route("/api/incidence/cycle/:cycle_id", get(incidence::list_for_cycle))
-        .route("/api/incidence", post(incidence::register))
-        .route("/api/revenue", post(revenue::register))
-        .route("/api/revenue/cycle/:cycle_id", get(revenue::list_for_cycle))
-        .route("/api/budgets", post(planning::create_budget))
-        .route("/api/schedules/cycle/:cycle_id", get(planning::get_schedule))
-        .route("/api/schedules/activities", post(planning::add_planned_activity))
+        // Soil
+        .route("/api/soil/area/:area_id", get(soil_h::list_for_area))
+        .route("/api/soil", post(soil_h::register))
+        .route("/api/soil/link", post(soil_h::link_soil))
+        // Payroll
+        .route("/api/payroll/workers", get(payroll_h::list_workers).post(payroll_h::register_worker))
+        .route("/api/payroll/cycle/:cycle_id", get(payroll_h::list_payroll))
+        .route("/api/payroll", post(payroll_h::record_payroll))
+        // Incidences
+        .route("/api/incidence/cycle/:cycle_id", get(inc_h::list_for_cycle))
+        .route("/api/incidence", post(inc_h::register))
+        // Revenue
+        .route("/api/revenue", post(finance_h::register_revenue))
+        .route("/api/revenue/cycle/:cycle_id", get(finance_h::list_revenue))
+        // Planning
+        .route("/api/budgets", post(plan_h::create_budget))
+        .route("/api/schedules/cycle/:cycle_id", get(plan_h::get_schedule))
+        .route("/api/schedules/activities", post(plan_h::add_activity))
         .with_state(state)
         .layer(cors)
 }

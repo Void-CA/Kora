@@ -1,40 +1,16 @@
-use kora_domain::finance::error::FinanceError;
-use kora_domain::ports::revenue_repository::RevenueRepository;
 use kora_kernel::ids::CycleId;
-use rust_decimal::Decimal;
-use serde::Serialize;
-
 use crate::state::AppState;
+use crate::features::finance::dto::Profitability;
 
-#[derive(Serialize)]
-pub struct Profitability {
-    pub baseline: String,
-    pub spent: String,
-    pub revenue: String,
-    pub profit: String,
-    pub roi_percent: String,
-    pub remaining: String,
-    pub variance: String,
-}
-
-pub fn execute(
-    state: &AppState,
-    cycle_id: &CycleId,
-) -> Result<Profitability, FinanceError> {
+pub fn execute(state: &AppState, cycle_id: &CycleId) -> Result<Profitability, ()> {
     let budget = {
         let repo = state.budget_repo.lock().unwrap();
-        repo.all()
-            .into_iter()
-            .find(|b| b.cycle_id() == cycle_id)
-            .ok_or(FinanceError::BudgetNotFound)?
+        repo.all().into_iter().find(|b| b.cycle_id() == cycle_id).ok_or(())?
     };
-
     let revenues = state.revenue_repo.lock().unwrap().for_cycle(cycle_id);
     let total_revenue = sum_revenues(&revenues);
-
     let spent = *budget.current_expenses();
     let baseline = *budget.baseline();
-
     let profit = total_revenue.subtract(&spent).unwrap_or(spent);
     let roi = compute_roi(&total_revenue, &spent);
 
@@ -63,13 +39,11 @@ fn sum_revenues(revenues: &[kora_domain::finance::revenue::Revenue]) -> kora_ker
             Some(a) => a.add(&amt).ok().or(Some(a)),
         };
     }
-    acc.unwrap_or_else(|| Money::new(Decimal::from(0), Currency::USD))
+    acc.unwrap_or_else(|| Money::new(rust_decimal::Decimal::from(0), Currency::USD))
 }
 
-fn compute_roi(revenue: &kora_kernel::money::Money, spent: &kora_kernel::money::Money) -> Decimal {
-    if spent.amount.is_zero() {
-        return Decimal::from(0);
-    }
+fn compute_roi(revenue: &kora_kernel::money::Money, spent: &kora_kernel::money::Money) -> rust_decimal::Decimal {
+    if spent.amount.is_zero() { return rust_decimal::Decimal::from(0); }
     let profit = revenue.amount - spent.amount;
-    (profit / spent.amount) * Decimal::from(100)
+    (profit / spent.amount) * rust_decimal::Decimal::from(100)
 }

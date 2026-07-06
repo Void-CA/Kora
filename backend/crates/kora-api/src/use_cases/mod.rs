@@ -1,16 +1,10 @@
-pub mod register_cycle;
-pub mod register_activity;
-pub mod register_expense;
-pub mod register_revenue;
-pub mod get_profitability;
+// Remaining use cases that haven't been migrated to features/ yet.
+// These are called from api/ areas.rs and cycles.rs.
+// When those are feature-migrated, this file goes away.
 pub mod get_field_history;
-pub mod register_soil_analysis;
-pub mod list_soil_for_area;
-pub mod payroll;
-pub mod incidence;
 pub mod get_cycle_timeline;
 pub mod get_area_dashboard;
 pub mod get_cycle_variance;
-pub mod create_budget;
-pub mod add_planned_activity;
-pub mod link_soil_to_cycle;
+pub mod register_activity;
+pub mod register_cycle;
+pub mod register_expense;
