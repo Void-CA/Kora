@@ -59,6 +59,10 @@ impl Area {
     pub fn measurement(&self) -> &AreaMeasurement {
         &self.measurement
     }
+
+    pub fn geometry(&self) -> &kora_kernel::polygon::Polygon {
+        &self.geometry
+    }
 }
 
 #[cfg(test)]

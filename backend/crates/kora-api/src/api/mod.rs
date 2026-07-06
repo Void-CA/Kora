@@ -42,6 +42,7 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/health", get(health::health))
         .route("/api/home", get(home_h::home))
         .route("/api/fields/overview", get(overview::fields_overview))
+        .route("/api/fields/geojson", get(overview::fields_geojson))
         .route("/api/operations/today", get(overview::operations_today))
         .route("/api/team/overview", get(overview::team_overview))
         .route("/api/finances/overview", get(overview::finances_overview))

@@ -19,4 +19,8 @@ impl Polygon {
     pub fn calculate_geodesic_sq_meters(&self) -> f64 {
         self.inner.geodesic_area_unsigned()
     }
+
+    pub fn inner(&self) -> &GeoPolygon<f64> {
+        &self.inner
+    }
 }

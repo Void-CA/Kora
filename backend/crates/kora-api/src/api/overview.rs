@@ -18,3 +18,6 @@ pub async fn finances_overview(State(state): State<Arc<AppState>>) -> Json<featu
 pub async fn history_overview(State(state): State<Arc<AppState>>) -> Json<features::history::overview::HistoryOverview> {
     Json(features::history::overview::execute(&state))
 }
+pub async fn fields_geojson(State(state): State<Arc<AppState>>) -> Json<serde_json::Value> {
+    Json(features::fields::geojson::execute(&state))
+}

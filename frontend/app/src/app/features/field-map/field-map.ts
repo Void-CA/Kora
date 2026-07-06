@@ -9,24 +9,7 @@ import L from 'leaflet';
       <figcaption class="map__caption">{{ caption() }}</figcaption>
     }
   `,
-  styles: `
-    :host { display: block; }
-
-    .map {
-      width: 100%;
-      min-height: 200px;
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 1px solid var(--border);
-    }
-
-    .map__caption {
-      font-size: 0.8125rem;
-      color: var(--ink-muted);
-      text-align: center;
-      margin-top: var(--space-2);
-    }
-  `,
+  styleUrl: './field-map.component.scss',
 })
 export class FieldMap {
   readonly caption = input<string>('');
@@ -42,6 +25,7 @@ export class FieldMap {
   constructor() {
     afterNextRender(() => {
       this.initMap();
+      this.loadGeoJSON();
     });
   }
 
@@ -59,5 +43,33 @@ export class FieldMap {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
     }).addTo(this.map);
+  }
+
+  private loadGeoJSON(): void {
+    if (!this.map) return;
+    fetch('http://localhost:8000/api/fields/geojson')
+      .then(r => r.json())
+      .then(data => {
+        const geoLayer = L.geoJSON(data, {
+          style: (feature) => {
+            const health = feature?.properties?.['health'] ?? 'ok';
+            const colors: Record<string, string> = {
+              ok: '#4a7c59', attention: '#b45309', critical: '#b91c1c',
+            };
+            return {
+              fillColor: colors[health] ?? '#4a7c59',
+              weight: 1,
+              color: '#ffffff',
+              fillOpacity: 0.5,
+            };
+          },
+          onEachFeature: (feature, layer) => {
+            const props = feature?.properties ?? {};
+            layer.bindPopup(`<b>${props['name'] ?? ''}</b><br/>${props['hectares'] ?? ''} ha`);
+          },
+        }).addTo(this.map);
+        this.map.fitBounds(geoLayer.getBounds().pad(0.1));
+      })
+      .catch(() => {});
   }
 }
