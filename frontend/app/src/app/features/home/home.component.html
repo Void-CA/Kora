@@ -34,24 +34,14 @@
 
       <section>
         <h2 class="section-label">Campos</h2>
-        <div class="field-row">
-          @for (f of vm.fields; track f.id) {
-            <a class="field-row__item"
-               [class.field-row__item--attention]="f.health==='attention'"
-               [class.field-row__item--critical]="f.health==='critical'"
-               [routerLink]="['/fields', f.id]">
-              <div class="field-row__head">
-                <span class="field-row__name">{{ f.name }}</span>
-                <span class="field-row__crop">{{ f.crop }} · {{ f.hectares }} ha</span>
-              </div>
-              <div class="field-row__bar"><div class="field-row__fill" style="width:{{ f.progress_percent }}%"></div></div>
-              <div class="field-row__foot">
-                <span>{{ f.days_to_harvest }} días a cosecha</span>
-                <span>{{ f.next_activity }}</span>
-              </div>
-            </a>
-          }
-        </div>
+        @for (f of vm.fields; track f.id) {
+          <kora-field-summary
+            [id]="f.id" [name]="f.name" [crop]="f.crop"
+            [hectares]="f.hectares" [progress]="f.progress_percent"
+            [daysToHarvest]="f.days_to_harvest"
+            [lastActivity]="f.next_activity"
+            [health]="f.health" />
+        }
       </section>
 
       <section>
