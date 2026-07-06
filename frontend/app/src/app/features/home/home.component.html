@@ -21,45 +21,43 @@
     </div>
   }
 
-  <div class="grid-2">
-    <section>
-      <h2 class="section-label">Campos</h2>
-      <div class="card-stack">
-        @for (f of vm.fields; track f.id) {
-          <a class="field-card"
-             [class.field-card--attention]="f.health==='attention'"
-             [class.field-card--critical]="f.health==='critical'"
-             [routerLink]="['/fields', f.id]">
-            <div class="field-card__head">
-              <span class="field-card__name">{{ f.name }}</span>
-              <span class="field-card__crop">{{ f.crop }}</span>
-            </div>
-            <div class="field-card__bar"><div class="field-card__fill" style="width:{{ f.progress_percent }}%"></div></div>
-            <div class="field-card__foot">
-              <span>{{ f.days_to_harvest }} días</span>
-              <span>{{ f.next_activity }}</span>
-            </div>
-          </a>
-        }
-      </div>
-    </section>
-
-    <section>
-      <h2 class="section-label">Equipo</h2>
-      <p class="team-summary">{{ vm.team.working_today }} trabajando · {{ vm.team.missing_yesterday }} ausente ayer</p>
-      <div class="card-stack">
-        @for (e of vm.team.entries; track e.name) {
-          <div class="person-row" [class.person-row--missing]="e.status==='missing'">
-            <span class="dot" [class.dot--ok]="e.status==='working'"
-                  [class.dot--attention]="e.status==='missing'"
-                  [class.dot--muted]="e.status==='completed'"></span>
-            <span class="person-row__name">{{ e.name }}</span>
-            <span class="person-row__status">{{ e.status === 'working' ? 'Trabajando' : e.status === 'missing' ? 'Ausente' : 'Completado' }}</span>
+  <section>
+    <h2 class="section-label">Campos</h2>
+    <div class="card-stack">
+      @for (f of vm.fields; track f.id) {
+        <a class="field-card"
+           [class.field-card--attention]="f.health==='attention'"
+           [class.field-card--critical]="f.health==='critical'"
+           [routerLink]="['/fields', f.id]">
+          <div class="field-card__head">
+            <span class="field-card__name">{{ f.name }}</span>
+            <span class="field-card__crop">{{ f.crop }}</span>
           </div>
-        }
-      </div>
-    </section>
-  </div>
+          <div class="field-card__bar"><div class="field-card__fill" style="width:{{ f.progress_percent }}%"></div></div>
+          <div class="field-card__foot">
+            <span>{{ f.days_to_harvest }} días a cosecha</span>
+            <span>{{ f.next_activity }}</span>
+          </div>
+        </a>
+      }
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-label">Equipo</h2>
+    <p class="team-summary">{{ vm.team.working_today }} trabajando · {{ vm.team.missing_yesterday }} ausente ayer</p>
+    <div class="card-stack">
+      @for (e of vm.team.entries; track e.name) {
+        <div class="person-row" [class.person-row--missing]="e.status==='missing'">
+          <span class="dot" [class.dot--ok]="e.status==='working'"
+                [class.dot--attention]="e.status==='missing'"
+                [class.dot--muted]="e.status==='completed'"></span>
+          <span class="person-row__name">{{ e.name }}</span>
+          <span class="person-row__status">{{ e.status === 'working' ? 'Trabajando' : e.status === 'missing' ? 'Ausente' : 'Completado' }}</span>
+        </div>
+      }
+    </div>
+  </section>
 
   @if (vm.alerts.length > 0) {
     <section>
