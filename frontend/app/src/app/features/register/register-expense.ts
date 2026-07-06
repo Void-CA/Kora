@@ -19,9 +19,7 @@ const BASE = 'http://localhost:8000';
       <h1 class="title">Registrar gasto</h1>
     </header>
 
-    @if (!feedback(); as fb) {
-      <app-operation-wizard [steps]="steps" (complete)="onComplete($event)" />
-    } @else {
+    @if (feedback(); as fb) {
       <div class="feedback">
         <span class="feedback__icon">✓</span>
         <div class="feedback__body">
@@ -38,6 +36,8 @@ const BASE = 'http://localhost:8000';
         </div>
         <button class="btn" (click)="done()">Ir a campaña</button>
       </div>
+    } @else {
+      <app-operation-wizard [steps]="steps" (complete)="onComplete($event)" />
     }
   `,
   styles: [`

@@ -27,11 +27,11 @@ export interface WizardStep {
             }
             @case ('number') {
               <input class="input" type="number" #num [placeholder]="currentStep().placeholder ?? ''"
-                     [value]="answers()[currentStep().key] ?? ''" (change)="answer(num.value)" />
+                      [value]="answers()[currentStep().key]" (change)="answer(num.value)" />
             }
             @default {
               <input class="input" type="text" #txt [placeholder]="currentStep().placeholder ?? ''"
-                     [value]="answers()[currentStep().key] ?? ''" (change)="answer(txt.value)" />
+                      [value]="answers()[currentStep().key]" (change)="answer(txt.value)" />
             }
           }
           <div class="wizard__nav">

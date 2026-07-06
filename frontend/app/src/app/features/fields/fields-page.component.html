@@ -7,7 +7,7 @@
         [hectares]="f.hectares" [progress]="f.progress_percent"
         [daysToHarvest]="f.days_to_harvest"
         [lastActivity]="f.last_activity_name"
-        [health]="f.health" variant="expanded"
+        [health]="$any(f.health)" variant="expanded"
         [cost]="f.cost_accumulated" [responsible]="f.responsible"
         [phases]="f.phases" />
     }
