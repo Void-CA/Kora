@@ -4,7 +4,6 @@ import { RouterLink } from '@angular/router';
 const OPERATIONS = [
   { id: 'activity', label: 'Actividad', desc: 'Registrar una labor realizada en el campo', icon: 'check' },
   { id: 'expense', label: 'Gasto', desc: 'Registrar un costo asociado a una campaña', icon: 'dollar' },
-  { id: 'campaign', label: 'Campaña', desc: 'Iniciar un nuevo ciclo productivo', icon: 'plus' },
 ];
 
 @Component({

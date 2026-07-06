@@ -16,6 +16,7 @@ export const routes: Routes = [
       { path: 'history/:id', loadComponent: () => import('./features/cycle-detail/cycle-detail').then(m => m.CycleDetail), title: 'Kora · Campaña' },
       { path: 'register', loadComponent: () => import('./features/register/register-hub').then(m => m.RegisterHub), title: 'Kora · Registrar' },
       { path: 'register/expense', loadComponent: () => import('./features/register/register-expense').then(m => m.RegisterExpensePage), title: 'Kora · Registrar gasto' },
+      { path: 'register/activity', loadComponent: () => import('./features/register/register-activity').then(m => m.RegisterActivityPage), title: 'Kora · Registrar actividad' },
     ],
   },
   { path: '**', redirectTo: '' },
