@@ -29,3 +29,10 @@
 .field__fill { height: 100%; background: var(--ink-faint); border-radius: 1px; }
 .field__foot { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--ink-subtle); margin-top: var(--space-1); }
 .field__status { flex-shrink: 0; margin-top: 0.15rem; }
+.field--expanded .field__link { border-bottom: none; padding-bottom: 0; }
+.field__extras { display: flex; gap: var(--space-4); margin-top: var(--space-1); font-size: 0.75rem; color: var(--ink-muted); }
+.field__phases { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
+.phase { font-size: 0.6875rem; padding: 2px 8px; border-radius: 999px; background: var(--surface-muted); color: var(--ink-subtle); }
+.phase--done { background: var(--state-ok-soft); color: var(--state-ok); }
+.phase--current { background: var(--state-info-soft); color: var(--state-info); }
+.phase__day { color: inherit; opacity: 0.7; margin-left: 0.25rem; }
