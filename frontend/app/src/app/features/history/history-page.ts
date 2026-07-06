@@ -1,15 +1,29 @@
 import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import type { HistoryView } from '../../core/view-models';
-import { MOCK_HISTORY, mockDelay } from '../../core/mock-data';
 
-@Component({
-  selector: 'app-history',
-  imports: [RouterLink],
+interface HistoryOverview {
+  campaigns: CampaignCardData[];
+}
+interface CampaignCardData {
+  id: string; crop: string; field: string; started: string; ended: string | null;
+  status: string; progress_percent: number;
+  total_activities: number; completed_activities: number;
+  budget: string; spent: string; revenue: string;
+  profitability: string; health: string;
+}
+
+const BASE = 'http://localhost:8000';
+
+@Component({ selector: 'app-history', imports: [RouterLink],
   templateUrl: './history-page.component.html',
   styleUrl: './history-page.component.scss',
 })
 export class HistoryPage {
-  readonly vm = signal<HistoryView | null>(null);
-  constructor() { mockDelay().then(() => this.vm.set(MOCK_HISTORY)); }
+  readonly vm = signal<HistoryOverview | null>(null);
+  constructor() {
+    fetch(`${BASE}/api/history/overview`)
+      .then(r => r.json())
+      .then(data => this.vm.set(data))
+      .catch(() => {});
+  }
 }

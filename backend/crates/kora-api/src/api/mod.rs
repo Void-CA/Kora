@@ -6,6 +6,7 @@ use std::sync::Arc;
 mod operation;
 mod fields;
 mod health;
+mod overview;
 
 use crate::state::AppState;
 use crate::features::{
@@ -40,6 +41,11 @@ fn router(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/api/health", get(health::health))
         .route("/api/home", get(home_h::home))
+        .route("/api/fields/overview", get(overview::fields_overview))
+        .route("/api/operations/today", get(overview::operations_today))
+        .route("/api/team/overview", get(overview::team_overview))
+        .route("/api/finances/overview", get(overview::finances_overview))
+        .route("/api/history/overview", get(overview::history_overview))
         .route("/api/operation/today", get(operation::today))
         .route("/api/fields", get(fields::list))
         .route("/api/fields/:id", get(fields::get_one))

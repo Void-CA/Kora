@@ -6,3 +6,5 @@ pub mod payroll;
 pub mod incidences;
 pub mod cycles;
 pub mod fields;
+pub mod history;
+pub mod operations;
