@@ -14,6 +14,8 @@ export const routes: Routes = [
       { path: 'finances', loadComponent: () => import('./features/finances/finances-page').then(m => m.FinancesPage), title: 'Kora · Finanzas' },
       { path: 'history', loadComponent: () => import('./features/history/history-page').then(m => m.HistoryPage), title: 'Kora · Historial' },
       { path: 'history/:id', loadComponent: () => import('./features/cycle-detail/cycle-detail').then(m => m.CycleDetail), title: 'Kora · Campaña' },
+      { path: 'register', loadComponent: () => import('./features/register/register-hub').then(m => m.RegisterHub), title: 'Kora · Registrar' },
+      { path: 'register/expense', loadComponent: () => import('./features/register/register-expense').then(m => m.RegisterExpensePage), title: 'Kora · Registrar gasto' },
     ],
   },
   { path: '**', redirectTo: '' },
