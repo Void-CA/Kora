@@ -1,0 +1,14 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.header__primary { display: flex; align-items: baseline; gap: var(--space-2); }
+.header__crop { font-size: 1.125rem; font-weight: 600; color: var(--ink); margin: 0; }
+.header__field { font-size: 0.875rem; color: var(--ink-muted); }
+.header__meta { display: flex; align-items: baseline; gap: var(--space-2); font-size: 0.75rem; color: var(--ink-subtle); }
+.header__sep { color: var(--ink-faint); }
+.header__status { font-weight: 500; color: var(--ink-subtle); }
+.header__status--active { color: var(--state-info); }

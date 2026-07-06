@@ -79,8 +79,7 @@
       @if (vm.weather; as w) {
         <div class="weather-card">
           <h3 class="context-label">Clima</h3>
-          <p class="weather-main">{{ w.temp }} · {{ w.forecast }}</p>
-          <p class="weather-detail">{{ w.humidity }} humedad · {{ w.rain_expected ? 'Lluvia esperada' : 'Sin lluvia' }}</p>
+          <kora-weather-strip [temp]="w.temp" [forecast]="w.forecast" [humidity]="w.humidity" [rainExpected]="w.rain_expected" />
         </div>
       }
       <div class="context-card">

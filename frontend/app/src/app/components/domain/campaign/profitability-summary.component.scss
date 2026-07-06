@@ -1,0 +1,7 @@
+.summary { display: flex; flex-direction: column; gap: var(--space-2); }
+.summary__row { display: flex; justify-content: space-between; font-size: 0.8125rem; }
+.summary__row--total { padding-top: var(--space-2); border-top: 1px solid var(--border); font-weight: 600; }
+.summary__label { color: var(--ink-muted); }
+.summary__value { color: var(--ink); font-variant-numeric: tabular-nums; }
+.summary__value--pos { color: var(--state-ok); }
+.summary__value--neg { color: var(--state-critical); }

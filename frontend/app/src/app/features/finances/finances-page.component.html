@@ -1,23 +1,15 @@
 @if (vm(); as vm) {
   <header class="header"><h1 class="title">Finanzas</h1></header>
-  <div class="totals">
-    <div class="total"><span class="total__label">Presupuesto total</span><span class="total__value">{{ vm.total_budget }}</span></div>
-    <div class="total"><span class="total__label">Gastado</span><span class="total__value">{{ vm.total_spent }}</span></div>
-    <div class="total"><span class="total__label">Ingresos</span><span class="total__value">{{ vm.total_revenue }}</span></div>
-    <div class="total"><span class="total__label">Ganancia</span><span class="total__value total__value--profit">{{ vm.profit }}</span></div>
-    <div class="total"><span class="total__label">ROI</span><span class="total__value total__value--profit">{{ vm.roi }}</span></div>
-  </div>
-  <section><h2 class="section-label">Ciclos</h2>
-    @for (c of vm.cycles; track c.cycle_name) {
-      <div class="cycle-row" [class.cycle-row--attention]="c.status==='attention'">
-        <div class="cycle-row__head"><span class="cycle-row__name">{{ c.cycle_name }}</span></div>
-        <div class="cycle-row__grid">
-          <div><span class="cycle-row__label">Presupuesto</span><span class="cycle-row__val">{{ c.budget }}</span></div>
-          <div><span class="cycle-row__label">Gastado</span><span class="cycle-row__val">{{ c.spent }}</span></div>
-          <div><span class="cycle-row__label">Ingresos</span><span class="cycle-row__val">{{ c.revenue }}</span></div>
-          <div><span class="cycle-row__label">Ganancia</span><span class="cycle-row__val">{{ c.profit }}</span></div>
-        </div>
-      </div>
-    }
-  </section>
+
+  <kora-profitability-summary
+    [baseline]="vm.total_budget" [spent]="vm.total_spent"
+    [revenue]="vm.total_revenue" [profit]="vm.profit" [roi]="vm.roi" />
+
+  <div class="section-label">Ciclos</div>
+  @for (c of vm.cycles; track c.cycle_name) {
+    <div class="cycle-row" [class.cycle-row--attention]="c.status==='attention'">
+      <div class="cycle-row__head"><span class="cycle-row__name">{{ c.cycle_name }}</span></div>
+      <kora-budget-bar [percent]="spentPct(c.spent, c.budget)" [spent]="c.spent" [total]="c.budget" />
+    </div>
+  }
 } @else { <p class="loading">Cargando…</p> }
