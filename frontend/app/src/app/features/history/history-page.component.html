@@ -7,10 +7,10 @@
           <div><span class="campaign__crop">{{ c.crop }}</span><span class="campaign__field">{{ c.field }}</span></div>
           <span class="campaign__status" [class.campaign__status--active]="c.status==='active'">{{ c.status === 'active' ? 'Activo' : 'Completado' }}</span>
         </div>
-        <div class="campaign__bar"><div class="campaign__fill" style="width:{{ c.progressPercent }}%"></div></div>
+        <div class="campaign__bar"><div class="campaign__fill" style="width:{{ c.progress_percent }}%"></div></div>
         <div class="campaign__dates">{{ c.started }} @if (c.ended) { — {{ c.ended }} }</div>
         <div class="campaign__stats">
-          <div><span class="campaign__label">Actividades</span><span class="campaign__val">{{ c.completedActivities }}/{{ c.totalActivities }}</span></div>
+          <div><span class="campaign__label">Actividades</span><span class="campaign__val">{{ c.completed_activities }}/{{ c.total_activities }}</span></div>
           <div><span class="campaign__label">Presupuesto</span><span class="campaign__val">{{ c.budget }}</span></div>
           <div><span class="campaign__label">Gasto</span><span class="campaign__val">{{ c.spent }}</span></div>
           <div><span class="campaign__label">Ingreso</span><span class="campaign__val">{{ c.revenue }}</span></div>

@@ -1,8 +1,8 @@
 import { Component, signal, input, computed, effect } from '@angular/core';
-import { ContextChips } from '../../shared/context-chips';
-import { CycleTimeline } from '../../shared/cycle-timeline';
-import { MiniMap } from '../../shared/mini-map';
-import { StatusPill } from '../../shared/status-pill';
+import { ContextChips } from '../../shared/components/context-chips';
+import { CycleTimeline } from '../../shared/components/cycle-timeline';
+import { MiniMap } from '../../shared/components/mini-map';
+import { StatusPill } from '../../shared/components/status-pill';
 import { getField, Field as ApiField } from '../../api/kora-api';
 
 @Component({

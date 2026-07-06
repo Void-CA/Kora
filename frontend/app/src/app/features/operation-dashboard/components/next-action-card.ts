@@ -1,5 +1,5 @@
 import { Component, input, computed } from '@angular/core';
-import { ContextChips } from '../../../shared/context-chips';
+import { ContextChips } from '../../../shared/components/context-chips';
 import { NextAction } from '../../../api/kora-api';
 
 @Component({

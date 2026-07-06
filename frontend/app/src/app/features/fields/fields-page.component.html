@@ -7,11 +7,11 @@
           <div><span class="card__name">{{ f.name }}</span><span class="card__crop">{{ f.crop }}</span></div>
           <span class="card__ha">{{ f.hectares }} ha</span>
         </div>
-        <div class="card__bar"><div class="card__fill" style="width:{{ f.progressPercent }}%"></div></div>
+        <div class="card__bar"><div class="card__fill" style="width:{{ f.progress_percent }}%"></div></div>
         <div class="card__info">
-          <div class="card__stat"><span class="card__stat-label">Cosecha</span><span class="card__stat-value">{{ f.daysToHarvest }} días</span></div>
-          <div class="card__stat"><span class="card__stat-label">Última</span><span class="card__stat-value">{{ f.daysSinceLastActivity === 0 ? 'hoy' : 'hace ' + f.daysSinceLastActivity + ' días' }}</span></div>
-          <div class="card__stat"><span class="card__stat-label">Costo</span><span class="card__stat-value">{{ f.costAccumulated }}</span></div>
+          <div class="card__stat"><span class="card__stat-label">Cosecha</span><span class="card__stat-value">{{ f.days_to_harvest }} días</span></div>
+          <div class="card__stat"><span class="card__stat-label">Última</span><span class="card__stat-value">{{ f.days_since_last_activity === 0 ? 'hoy' : 'hace ' + f.days_since_last_activity + ' días' }}</span></div>
+          <div class="card__stat"><span class="card__stat-label">Costo</span><span class="card__stat-value">{{ f.cost_accumulated }}</span></div>
           <div class="card__stat"><span class="card__stat-label">Responsable</span><span class="card__stat-value">{{ f.responsible }}</span></div>
         </div>
         <div class="card__phases">

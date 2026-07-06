@@ -15,14 +15,14 @@
           <span class="worker__name">{{ w.name }}</span>
           <span class="worker__role">{{ w.role }}</span>
         </div>
-        @if (w.todayActivity) { <p class="worker__activity">{{ w.todayActivity }}</p> }
-        @if (w.lastPayment) { <p class="worker__pay">Último pago: {{ w.lastPayment }}</p> }
+        @if (w.today_activity) { <p class="worker__activity">{{ w.today_activity }}</p> }
+        @if (w.last_payment) { <p class="worker__pay">Último pago: {{ w.last_payment }}</p> }
       </div>
     }
   </div>
-  @if (vm.recentPayments.length > 0) {
+  @if (vm.recent_payments.length > 0) {
     <section><h2 class="section-label">Pagos recientes</h2>
-      @for (p of vm.recentPayments; track p.worker + p.date) {
+      @for (p of vm.recent_payments; track p.worker + p.date) {
         <div class="payment-row">
           <span class="payment__name">{{ p.worker }}</span>
           <span class="payment__amount">{{ p.amount }}</span>
