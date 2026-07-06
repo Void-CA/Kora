@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FieldStatus } from './field-status';
+import { FieldStatus, FieldHealthStatus } from './field-status';
 
 export type FieldSummaryVariant = 'compact' | 'default' | 'expanded';
 
@@ -59,7 +59,7 @@ export class FieldSummary {
   readonly progress = input.required<number>();
   readonly daysToHarvest = input.required<number>();
   readonly lastActivity = input.required<string>();
-  readonly health = input<string>('ok');
+  readonly health = input<FieldHealthStatus>('ok');
   readonly variant = input<FieldSummaryVariant>('default');
   readonly cost = input<string>('');
   readonly responsible = input<string>('');

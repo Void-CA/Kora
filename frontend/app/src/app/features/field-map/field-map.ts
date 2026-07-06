@@ -46,7 +46,8 @@ export class FieldMap {
   }
 
   private loadGeoJSON(): void {
-    if (!this.map) return;
+    const map = this.map;
+    if (!map) return;
     fetch('http://localhost:8000/api/fields/geojson')
       .then(r => r.json())
       .then(data => {
@@ -67,8 +68,8 @@ export class FieldMap {
             const props = feature?.properties ?? {};
             layer.bindPopup(`<b>${props['name'] ?? ''}</b><br/>${props['hectares'] ?? ''} ha`);
           },
-        }).addTo(this.map);
-        this.map.fitBounds(geoLayer.getBounds().pad(0.1));
+        }).addTo(map);
+        map.fitBounds(geoLayer.getBounds().pad(0.1));
       })
       .catch(() => {});
   }
