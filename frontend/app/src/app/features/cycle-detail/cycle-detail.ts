@@ -1,4 +1,4 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { SlicePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -13,16 +13,19 @@ import {
 import { TimestampPipe } from '../../shared/pipes/timestamp.pipe';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { VarianceChart } from '../variance-chart/variance-chart';
+import { CropCycleHeader } from '../../components/domain/campaign/crop-cycle-header';
+import { ProfitabilitySummary } from '../../components/domain/campaign/profitability-summary';
+import { BudgetBar } from '../../components/domain/campaign/budget-bar';
 
 @Component({
   selector: 'app-cycle-detail',
-  imports: [SlicePipe, TimestampPipe, MoneyPipe, VarianceChart],
+  imports: [SlicePipe, TimestampPipe, MoneyPipe, VarianceChart, CropCycleHeader, ProfitabilitySummary, BudgetBar],
   template: `
     @if (cycle(); as c) {
-      <header class="page-header">
-        <h1 class="page-title">Ciclo {{ c.summary.id | slice:0:8 }}…</h1>
-        <span class="page-period">{{ c.summary.period_start | ts }} — {{ c.summary.period_end | ts }}</span>
-      </header>
+      <kora-crop-cycle-header
+        crop="Campaña" [field]="c.summary.area_id"
+        [period]="(c.summary.period_start | ts) + ' — ' + (c.summary.period_end | ts)"
+        status="active" />
 
       <div class="tabs">
         @for (tab of tabs; track tab.id; let i = $index) {
@@ -36,13 +39,11 @@ import { VarianceChart } from '../variance-chart/variance-chart';
       <!-- Tab 0: Resumen -->
       @if (activeTab() === 0) {
         @if (profit(); as p) {
-          <div class="grid-4">
-            <div class="metric"><span class="metric__label">Presupuesto</span><span class="metric__value">{{ p.baseline | money }}</span></div>
-            <div class="metric"><span class="metric__label">Gastado</span><span class="metric__value">{{ p.spent | money }}</span></div>
-            <div class="metric"><span class="metric__label">Ingresos</span><span class="metric__value">{{ p.revenue | money }}</span></div>
-            <div class="metric"><span class="metric__label">ROI</span><span class="metric__value">{{ p.roi_percent }}%</span></div>
-            <div class="metric"><span class="metric__label">Ganancia</span><span class="metric__value">{{ p.profit | money }}</span></div>
-            <div class="metric"><span class="metric__label">Disponible</span><span class="metric__value">{{ p.remaining | money }}</span></div>
+          <div class="summary-section">
+            <kora-profitability-summary
+              [baseline]="p.baseline" [spent]="p.spent"
+              [revenue]="p.revenue" [profit]="p.profit"
+              [roi]="p.roi_percent + '%'" profitSign="+" />
           </div>
         }
         @if (variance(); as v) {
