@@ -291,12 +291,12 @@
 }
 
 .btn--primary {
-  background: var(--ink);
-  color: var(--surface-raised);
+  background: var(--btn-primary);
+  color: var(--btn-primary-text);
 }
 
 .btn--primary:hover {
-  background: #27272a;
+  background: var(--btn-primary-hover);
 }
 
 .loading {

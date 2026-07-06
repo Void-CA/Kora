@@ -106,27 +106,9 @@ export class VarianceChart {
         min: 0,
       },
       series: [
-        {
-          name: 'atrasado',
-          type: 'bar' as const,
-          stack: 'total',
-          color: '#dc2626',
-          data: lateDays,
-        },
-        {
-          name: 'adelantado',
-          type: 'bar' as const,
-          stack: 'total',
-          color: '#ca8a04',
-          data: earlyDays,
-        },
-        {
-          name: 'a tiempo',
-          type: 'bar' as const,
-          stack: 'total',
-          color: '#16a34a',
-          data: onTime,
-        },
+        { name: 'atrasado', type: 'bar' as const, stack: 'total', color: '#b91c1c', data: lateDays },
+        { name: 'adelantado', type: 'bar' as const, stack: 'total', color: '#b45309', data: earlyDays },
+        { name: 'a tiempo', type: 'bar' as const, stack: 'total', color: '#4a7c59', data: onTime },
       ],
     };
   });
