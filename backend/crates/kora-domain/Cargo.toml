@@ -11,3 +11,4 @@ uuid = { workspace = true }
 geo-types = { workspace = true }
 geo = { workspace = true }
 rust_decimal = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
