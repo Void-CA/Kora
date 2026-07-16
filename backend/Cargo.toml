@@ -1,9 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/kora-kernel",
     "crates/kora-domain",
-    "crates/kora-api",
+    "crates/kora-api", 
 ]
 
 [workspace.package]
@@ -24,6 +23,5 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tower-http = { version = "0.5", features = ["cors"] }
 
-kora-kernel = { path = "crates/kora-kernel" }
 kora-domain = { path = "crates/kora-domain" }
 kora-api = { path = "crates/kora-api" }
