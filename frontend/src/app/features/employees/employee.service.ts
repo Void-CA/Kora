@@ -1,6 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 
+import { API_BASE } from '../../api';
+
+const EMPLOYEES = `${API_BASE}/employees`;
+
 export interface Employee {
   id: string;
   name: string;
@@ -14,13 +18,12 @@ export interface CreateEmployeeRequest {
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/v1/employees';
 
   list() {
-    return this.http.get<Employee[]>(this.baseUrl);
+    return this.http.get<Employee[]>(EMPLOYEES);
   }
 
   create(body: CreateEmployeeRequest) {
-    return this.http.post<Employee>(this.baseUrl, body);
+    return this.http.post<Employee>(EMPLOYEES, body);
   }
 }
