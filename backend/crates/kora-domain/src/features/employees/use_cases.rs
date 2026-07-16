@@ -5,7 +5,7 @@ use super::errors::EmployeeError;
 use super::repository::{EmployeeRepository, WorkLogRepository};
 use super::work_log::{WorkLog, WorkLogId};
 
-pub fn create_employee(
+pub async fn create_employee(
     repo: &dyn EmployeeRepository,
     name: String,
 ) -> Result<Employee, EmployeeError> {
@@ -19,15 +19,17 @@ pub fn create_employee(
         active: true,
     };
 
-    repo.insert(&employee)?;
+    repo.insert(&employee).await?;
     Ok(employee)
 }
 
-pub fn list_employees(repo: &dyn EmployeeRepository) -> Result<Vec<Employee>, EmployeeError> {
-    repo.list()
+pub async fn list_employees(
+    repo: &dyn EmployeeRepository,
+) -> Result<Vec<Employee>, EmployeeError> {
+    repo.list().await
 }
 
-pub fn register_work_log(
+pub async fn register_work_log(
     repo: &dyn WorkLogRepository,
     employee_id: EmployeeId,
     hours: f64,
@@ -44,13 +46,13 @@ pub fn register_work_log(
         hours,
     };
 
-    repo.insert(&work_log)?;
+    repo.insert(&work_log).await?;
     Ok(work_log)
 }
 
-pub fn list_work_logs(
+pub async fn list_work_logs(
     repo: &dyn WorkLogRepository,
     employee_id: EmployeeId,
 ) -> Result<Vec<WorkLog>, EmployeeError> {
-    repo.list_by_employee(employee_id)
+    repo.list_by_employee(employee_id).await
 }

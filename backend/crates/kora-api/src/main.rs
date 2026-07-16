@@ -27,11 +27,9 @@ async fn main() {
         .allow_methods(Any)
         .allow_headers(Any);
 
-    let state = config::build_state();
+    let state = config::build_state(pool);
 
-    let app = router::build()
-        .layer(cors)
-        .with_state(state);
+    let app = router::build().layer(cors).with_state(state);
 
     let addr = format!("0.0.0.0:{}", config.port);
     tracing::info!("listening on {}", addr);

@@ -6,4 +6,5 @@ use crate::features;
 pub fn build() -> Router<AppState> {
     Router::new()
         .nest("/api/v1/employees", features::employees::router::router())
+        .nest("/api/v1/work-logs", features::employees::router::work_logs_router())
 }

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use kora_domain::features::employees::employee::Employee;
+use kora_domain::features::employees::work_log::WorkLog;
 
 // --- Employee ---
 
@@ -30,7 +31,6 @@ impl From<Employee> for EmployeeResponse {
 
 // --- WorkLog ---
 
-#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct CreateWorkLogRequest {
     pub employee_id: Uuid,
@@ -38,11 +38,21 @@ pub struct CreateWorkLogRequest {
     pub hours: f64,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Serialize)]
 pub struct WorkLogResponse {
     pub id: Uuid,
     pub employee_id: Uuid,
     pub worked_on: NaiveDate,
     pub hours: f64,
+}
+
+impl From<WorkLog> for WorkLogResponse {
+    fn from(w: WorkLog) -> Self {
+        Self {
+            id: w.id.0,
+            employee_id: w.employee_id.0,
+            worked_on: w.worked_on,
+            hours: w.hours,
+        }
+    }
 }

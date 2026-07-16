@@ -791,6 +791,7 @@ dependencies = [
 name = "kora-api"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "axum",
  "chrono",
  "dotenvy",
@@ -810,6 +811,7 @@ dependencies = [
 name = "kora-domain"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "chrono",
  "serde",
  "thiserror",
