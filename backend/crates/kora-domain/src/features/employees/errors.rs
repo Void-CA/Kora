@@ -10,4 +10,7 @@ pub enum EmployeeError {
 
     #[error("hours must be greater than zero")]
     InvalidHours,
+
+    #[error("payment period is invalid: from must be before to")]
+    InvalidPaymentPeriod,
 }
